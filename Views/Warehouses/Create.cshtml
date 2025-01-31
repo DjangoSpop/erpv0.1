@@ -1,0 +1,123 @@
+﻿@model erpv0._1.Models.ViewModels.WarehouseViewModel
+
+<div class="container-fluid px-4" dir="rtl">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card bg-dark text-white shadow-lg border-0 rounded-lg mt-5">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">إضافة مستودع جديد</h3>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post" class="needs-validation" novalidate>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Code" class="form-control bg-secondary border-0 text-white"
+                                           placeholder=" " required />
+                                    <label asp-for="Code" class="text-white-50">الكود</label>
+                                    <div class="invalid-feedback">يرجى إدخال الكود</div>
+                                    <span asp-validation-for="Code" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Name" class="form-control bg-secondary border-0 text-white"
+                                           placeholder=" " required />
+                                    <label asp-for="Name" class="text-white-50">الاسم</label>
+                                    <div class="invalid-feedback">يرجى إدخال الاسم</div>
+                                    <span asp-validation-for="Name" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <input asp-for="Location" class="form-control bg-secondary border-0 text-white"
+                                           placeholder=" " required />
+                                    <label asp-for="Location" class="text-white-50">الموقع</label>
+                                    <div class="invalid-feedback">يرجى إدخال الموقع</div>
+                                    <span asp-validation-for="Location" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    <input asp-for="IsActive" class="form-check-input" type="checkbox" checked />
+                                    <label class="form-check-label" asp-for="IsActive">نشط</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 text-center">
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-plus-lg"></i> إضافة المستودع
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary px-4">
+                                <i class="bi bi-x-lg"></i> إلغاء
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Form validation
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+        })()
+
+        // Auto-focus first input
+        document.getElementById('Code').focus();
+    </script>
+}
+
+@section Styles {
+    <style>
+        .form-floating > .form-control,
+        .form-floating > .form-select {
+            height: calc(3.5rem + 2px);
+            line-height: 1.25;
+            background-color: #2c2c44 !important;
+        }
+
+        .form-floating > label {
+            padding: 1rem 0.75rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .form-control:focus {
+            background-color: #2c2c44 !important;
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+        }
+
+        .was-validated .form-control:invalid {
+            border-color: #dc3545;
+            background-color: #2c2c44 !important;
+        }
+
+        .was-validated .form-control:valid {
+            border-color: #198754;
+            background-color: #2c2c44 !important;
+        }
+
+        .btn {
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+        }
+    </style>
+}

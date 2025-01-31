@@ -1,0 +1,264 @@
+﻿@using erpv0._1.Models.ViewModels.WarhousesTransfer
+@model erpv0._1.Models.ViewModels.WarhousesTransfer.WarehouseTransferListViewModel
+
+@{
+    ViewData["Title"] = "إدارة نقل المخزون";
+    ViewData["Direction"] = "rtl";
+}
+
+@{
+    string GetStatusClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "pending" => "warning",
+            "inprogress" => "info",
+            "approved" => "success",
+            "cancelled" => "danger",
+            _ => "secondary"
+        };
+    }
+
+    string GetStatusText(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "pending" => "قيد الانتظار",
+            "inprogress" => "جاري التنفيذ",
+            "approved" => "تمت الموافقة",
+            "cancelled" => "ملغي",
+            _ => status
+        };
+    }
+}
+
+<div class="container-fluid" dir="rtl">
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start border-4 border-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-primary mb-1">طلبات النقل قيد الانتظار</div>
+                            <div class="h5 mb-0 fw-bold">@Model.Transfers.Count(x => x.Status == "Pending")</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-hourglass fs-2 text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-start border-4 border-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-success mb-1">طلبات النقل المكتملة</div>
+                            <div class="h5 mb-0 fw-bold">@Model.Transfers.Count(x => x.Status == "Completed")</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-check-circle fs-2 text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search & Filter Card -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary bg-gradient d-flex justify-content-between align-items-center py-3">
+            <h6 class="m-0 fw-bold text-white">
+                <i class="bi bi-search me-2"></i>بحث وتصفية
+            </h6>
+            <a asp-action="Create" class="btn btn-sm btn-light" asp-controller="WarehouseTransfers">
+                <i class="bi bi-plus-circle me-1"></i>طلب نقل جديد
+            </a>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <div class="form-floating">
+                        <input type="text" class="form-control" id="searchTerm" name="searchTerm" value="@Model.SearchTerm">
+                        <label for="searchTerm">بحث</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-floating">
+                        <select class="form-select" id="status" name="status">
+                            <option value="">الكل</option>
+                            <option value="Pending" selected="@(Model.Status == "Pending")">قيد الانتظار</option>
+                            <option value="InProgress" selected="@(Model.Status == "InProgress")">جاري التنفيذ</option>
+                            <option value="Completed" selected="@(Model.Status == "Completed")">مكتمل</option>
+                        </select>
+                        <label for="status">الحالة</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-floating">
+                        <select class="form-select" id="sourceWarehouseId" name="sourceWarehouseId"
+                                asp-items='@(new SelectList(Model.Warehouses, "WarehouseId", "Name", Model.SourceWarehouseId))'>
+                            <option value="">كل المستودعات</option>
+                        </select>
+                        <label for="sourceWarehouseId">المستودع المصدر</label>
+                    </div>
+                </div>
+                <div class="col-md-3 d-flex align-items-center">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search me-1"></i>بحث
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Transfers Table Card -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>رقم الطلب</th>
+                            <th>المنتج</th>
+                            <th>من مستودع</th>
+                            <th>إلى مستودع</th>
+                            <th>الكمية</th>
+                            <th>الحالة</th>
+                            <th>تاريخ الطلب</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Transfers)
+                        {
+                            <tr>
+                                <td>@item.TransferId</td>
+                                <td>@item.Product.ProductName</td>
+                                <td>@item.SourceWarehouse.Name</td>
+                                <td>@item.DestWarehouse.Name</td>
+                                <td>@item.Quantity</td>
+                                <td>
+                                    <span class="badge bg-@GetStatusClass(item.Status)">
+                                        @GetStatusText(item.Status)
+                                    </span>
+                                </td>
+                                <td>@item.RequestedDate.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a asp-action="Details" asp-route-id="@item.TransferId"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.TransferId"
+                                           class="btn btn-sm btn-outline-warning">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.TransferId"
+                                           class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    @if (Model.PagingInfo.TotalPages > 1)
+    {
+        <nav aria-label="Page navigation" class="mt-3">
+            <ul class="pagination justify-content-center">
+                @for (var i = 1; i <= Model.PagingInfo.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.PagingInfo.CurrentPage ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, searchTerm = Model.SearchTerm, status = Model.Status, sourceWarehouseId = Model.SourceWarehouseId })">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+</div>
+
+<!-- Create Transfer Modal -->
+<div class="modal fade" id="createTransferModal" tabindex="-1" aria-labelledby="createTransferModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="createTransferModalLabel">
+                    <i class="bi bi-box-arrow-right me-2"></i> إنشاء طلب نقل جديد
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createTransferForm" asp-action="Create" method="post">
+                <div class="modal-body">
+                    <!-- Source Warehouse -->
+                    <div class="form-floating mb-3">
+                        <select asp-for="NewTransfer.SourceWarehouseId" class="form-select" required>
+                            <option value="">اختر المستودع المصدر</option>
+                            @foreach (var warehouse in Model.Warehouses)
+                            {
+                                <option value="@warehouse.WarehouseId">@warehouse.Name (@warehouse.Location)</option>
+                            }
+                        </select>
+                        <label for="NewTransfer.SourceWarehouseId">المستودع المصدر</label>
+                    </div>
+
+                    <!-- Destination Warehouse -->
+                    <div class="form-floating mb-3">
+                        <select asp-for="NewTransfer.DestWarehouseId" class="form-select" required>
+                            <option value="">اختر المستودع الوجهة</option>
+                            @foreach (var warehouse in Model.Warehouses)
+                            {
+                                <option value="@warehouse.WarehouseId">@warehouse.Name (@warehouse.Location)</option>
+                            }
+                        </select>
+                        <label for="NewTransfer.DestWarehouseId">المستودع الوجهة</label>
+                    </div>
+
+                    <!-- Product -->
+                    <div class="form-floating mb-3">
+                        <select asp-for="NewTransfer.ProductId" class="form-select" required>
+                            <option value="">اختر المنتج</option>
+                            @foreach (var product in Model.Products)
+                            {
+                                <option value="@product.ProductId">@product.ProductName</option>
+                            }
+                        </select>
+                        <label for="NewTransfer.ProductId">المنتج</label>
+                    </div>
+
+                    <!-- Quantity -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="NewTransfer.Quantity" type="number" class="form-control" min="1" required>
+                        <label for="NewTransfer.Quantity">الكمية</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i> إلغاء
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i> حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openCreateModal() {
+            var modal = new bootstrap.Modal(document.getElementById('createTransferModal'));
+            modal.show();
+        }
+    </script>
+}

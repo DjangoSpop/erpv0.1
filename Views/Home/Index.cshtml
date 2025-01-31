@@ -1,0 +1,474 @@
+﻿@model erpv0._1.Models.ViewModels.HomeViewModel
+
+<div class="container-fluid dashboard p-4" dir="rtl">
+    <!-- Quick Actions Bar -->
+    <div class="card bg-gradient-dark text-white rounded-4 shadow-lg mb-4">
+        <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">لوحة التحكم</h4>
+                <div class="btn-group">
+                    <a href="@Url.Action("Create", "Products")" class="btn btn-success btn-sm rounded-pill me-2">
+                        <i class="bi bi-plus-circle me-1"></i>منتج جديد
+                    </a>
+                    <a href="@Url.Action("Create", "StockEntries")" class="btn btn-info btn-sm rounded-pill me-2">
+                        <i class="bi bi-box-arrow-in-down me-1"></i>إدخال مخزون
+                    </a>
+                    <a href="@Url.Action("Create", "WarehouseTransfers")" class="btn btn-warning btn-sm rounded-pill">
+                        <i class="bi bi-arrow-left-right me-1"></i>نقل مخزون
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <!-- Products Card -->
+        <div class="col-md-3">
+            <a href="@Url.Action("Index", "Products")" class="text-decoration-none">
+                <div class="card stat-card bg-gradient-primary text-white h-100 rounded-4 shadow-lg">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-subtitle mb-2 opacity-75">إجمالي المنتجات</h6>
+                                <h2 class="card-title mb-0 fw-bold">@Model.Stats.TotalProducts</h2>
+                                <p class="text-light mt-2 mb-0">
+                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                    @Model.Stats.LowStockItems منتجات منخفضة المخزون
+                                </p>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="bi bi-box-seam fs-1"></i>
+                            </div>
+                        </div>
+                        <div class="chart-container mt-3" style="height: 60px;">
+                            <canvas id="productsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Warehouses Card -->
+        <div class="col-md-3">
+            <a href="@Url.Action("Index", "Warehouses")" class="text-decoration-none">
+                <div class="card stat-card bg-gradient-success text-white h-100 rounded-4 shadow-lg">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-subtitle mb-2 opacity-75">المخازن النشطة</h6>
+                                <h2 class="card-title mb-0 fw-bold">@Model.Stats.ActiveWarehouses</h2>
+                                <p class="text-light mt-2 mb-0">
+                                    <i class="bi bi-arrow-repeat me-1"></i>
+                                    @Model.Stats.PendingTransfers تحويلات معلقة
+                                </p>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="bi bi-building fs-1"></i>
+                            </div>
+                        </div>
+                        <div class="progress mt-4" style="height: 8px;">
+                            @foreach (var warehouse in Model.WarehouseUtilization)
+                            {
+                                <div class="progress-bar bg-info" role="progressbar" 
+                                     style="width: @warehouse.UtilizationPercentage%; opacity: 0.7;"
+                                     title="@warehouse.WarehouseName: @warehouse.UtilizationPercentage.ToString("0")%">
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Inventory Value Card -->
+        <div class="col-md-3">
+            <a href="@Url.Action("Index", "StockEntries")" class="text-decoration-none">
+                <div class="card stat-card bg-gradient-info text-white h-100 rounded-4 shadow-lg">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-subtitle mb-2 opacity-75">قيمة المخزون</h6>
+                                <h2 class="card-title mb-0 fw-bold">@Model.Stats.TotalInventoryValue.ToString("C")</h2>
+                                <p class="text-light mt-2 mb-0">
+                                    <i class="bi bi-graph-up me-1"></i>
+                                    متوسط القيمة: @Model.InventoryMetrics.AverageStockValue.ToString("C")
+                                </p>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="bi bi-cash-stack fs-1"></i>
+                            </div>
+                        </div>
+                        <div class="chart-container mt-3" style="height: 60px;">
+                            <canvas id="valueChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Stock Movement Card -->
+        <div class="col-md-3">
+            <a href="@Url.Action("Index", "StockEntries", new { filter = "outOfStock" })" class="text-decoration-none">
+                <div class="card stat-card bg-gradient-danger text-white h-100 rounded-4 shadow-lg">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-subtitle mb-2 opacity-75">حركة المخزون</h6>
+                                <h2 class="card-title mb-0 fw-bold">@Model.InventoryMetrics.TotalMovements</h2>
+                                <p class="text-light mt-2 mb-0">
+                                    <i class="bi bi-exclamation-circle me-1"></i>
+                                    @Model.InventoryMetrics.StockOutItems منتجات نفذت
+                                </p>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="bi bi-arrow-left-right fs-1"></i>
+                            </div>
+                        </div>
+                        <div class="chart-container mt-3" style="height: 60px;">
+                            <canvas id="movementsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="card bg-dark text-white rounded-4 shadow-lg">
+        <div class="card-header bg-transparent border-0 p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">الأنشطة الأخيرة</h5>
+                <div class="input-group w-auto">
+                    <input type="text" class="form-control bg-darker border-0" placeholder="بحث..." id="activitySearch">
+                    <button class="btn btn-outline-light"><i class="bi bi-search"></i></button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-dark align-middle mb-0" id="activitiesTable">
+                    <thead>
+                        <tr>
+                            <th class="border-0 px-4">التاريخ</th>
+                            <th class="border-0">النشاط</th>
+                            <th class="border-0">الوصف</th>
+                            <th class="border-0">الحالة</th>
+                            <th class="border-0 text-end px-4">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var activity in Model.RecentActivities)
+                        {
+                            <tr>
+                                <td class="px-4">@activity.Date.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>
+                                    <span class="badge bg-@GetActivityBadgeColor(activity.ActivityType) rounded-pill px-3">
+                                        @activity.ActivityType
+                                    </span>
+                                </td>
+                                <td>@activity.Description</td>
+                                <td>
+                                    <span class="badge bg-@GetStatusBadgeColor(activity.Status) rounded-pill px-3">
+                                        @activity.Status
+                                    </span>
+                                </td>
+                                <td class="text-end px-4">
+                                    <button class="btn btn-link text-white p-0 mx-2" onclick="viewActivityDetails('@activity.ActivityType', '@activity.Date')">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private string GetActivityBadgeColor(string activityType)
+    {
+        return activityType.ToLower() switch
+        {
+            "stock movement" => "info",
+            "transfer" => "warning",
+            _ => "primary"
+        };
+    }
+
+    private string GetStatusBadgeColor(string status)
+    {
+        return status.ToLower() switch
+        {
+            "completed" => "success",
+            "pending" => "warning",
+            "cancelled" => "danger",
+            _ => "secondary"
+        };
+    }
+}
+
+<style>
+:root {
+    --primary-dark: #1a1a2e;
+    --secondary-dark: #16213e;
+    --accent-blue: #0f3460;
+    --text-light: #e9ecef;
+}
+
+.dashboard {
+    background-color: var(--primary-dark);
+    min-height: 100vh;
+}
+
+/* Gradient Backgrounds */
+.bg-gradient-dark { background: linear-gradient(135deg, #1a1a2e, #16213e); }
+.bg-gradient-primary { background: linear-gradient(135deg, #0f3460, #162955); }
+.bg-gradient-success { background: linear-gradient(135deg, #2e7d32, #388e3c); }
+.bg-gradient-info { background: linear-gradient(135deg, #0288d1, #0277bd); }
+.bg-gradient-danger { background: linear-gradient(135deg, #c62828, #d32f2f); }
+
+/* Card Styling */
+.stat-card {
+    transition: all 0.3s ease;
+    border: none;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.stat-icon {
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.stat-card:hover .stat-icon {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Progress Bar */
+.progress {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.progress-bar {
+    transition: width 0.6s ease;
+}
+
+/* Table Styling */
+.table-dark {
+    background-color: transparent;
+}
+
+.table-dark td, 
+.table-dark th {
+    border-color: rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Form Controls */
+.form-control {
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+}
+
+.form-control:focus {
+    background-color: rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--text-light);
+    box-shadow: none;
+}
+
+/* Badges */
+.badge {
+    padding: 0.5em 1em;
+    font-weight: 500;
+}
+
+/* Charts */
+.chart-container {
+    position: relative;
+    width: 100%;
+}
+
+/* Animations */
+fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 20px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.animate-fadeIn {
+    animation: fadeInUp 0.6s ease-out;
+    animation-fill-mode: both;
+}
+
+</style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Initialize Charts
+        function initializeCharts() {
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { display: false },
+                    y: { display: false }
+                },
+                elements: {
+                    line: {
+                        tension: 0.4,
+                        borderWidth: 2,
+                        borderColor: 'rgba(255, 255, 255, 0.8)'
+                    },
+                    point: {
+                        radius: 0
+                    }
+                }
+            };
+
+            // Products Chart
+            new Chart(document.getElementById('productsChart'), {
+                type: 'line',
+                data: {
+                    labels: Array(12).fill(''),
+                    datasets: [{
+                        data: [@Model.InventoryMetrics.TotalStockEntries, /* Add more data points */],
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        fill: true
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Value Chart
+            new Chart(document.getElementById('valueChart'), {
+                type: 'line',
+                data: {
+                    labels: Array(12).fill(''),
+                    datasets: [{
+                        data: [@Model.InventoryMetrics.AverageStockValue, /* Historical values */],
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        fill: true
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Movements Chart
+            new Chart(document.getElementById('movementsChart'), {
+                type: 'bar',
+                data: {
+                    labels: Array(12).fill(''),
+                    datasets: [{
+                        data: [@Model.InventoryMetrics.TotalMovements, /* Movement history */],
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        borderColor: 'rgba(255, 255, 255, 0.8)',
+                        borderWidth: 1
+                    }]
+                },
+                options: chartOptions
+            });
+        }
+
+        // Activity Search
+        function initializeSearch() {
+            const searchInput = document.getElementById('activitySearch');
+            const table = document.getElementById('activitiesTable');
+            const rows = table.getElementsByTagName('tr');
+
+            searchInput.addEventListener('input', function(e) {
+                const term = e.target.value.toLowerCase();
+
+                for(let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(term) ? '' : 'none';
+                }
+            });
+        }
+
+        // Activity Details Modal
+        function viewActivityDetails(type, date) {
+            // Implement modal or slide-in panel for activity details
+            const modal = new bootstrap.Modal(document.getElementById('activityModal'));
+            document.getElementById('activityTitle').textContent = `تفاصيل ${type}`;
+            document.getElementById('activityDate').textContent = date;
+            modal.show();
+        }
+
+        // Initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize components
+            initializeCharts();
+            initializeSearch();
+
+            // Initialize tooltips
+            const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            tooltips.forEach(tooltip => new bootstrap.Tooltip(tooltip));
+
+            // Add animation classes
+            const cards = document.querySelectorAll('.stat-card');
+            cards.forEach((card, index) => {
+                card.classList.add('animate-fadeIn');
+                card.style.animationDelay = `${index * 100}ms`;
+            });
+        });
+
+        // Add refresh functionality
+        function refreshDashboard() {
+            fetch(window.location.href)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    document.querySelector('.dashboard').innerHTML = doc.querySelector('.dashboard').innerHTML;
+                    initializeCharts();
+                    initializeSearch();
+                });
+        }
+
+        // Auto-refresh every 5 minutes
+        setInterval(refreshDashboard, 300000);
+    </script>
+    }
+    <!-- Activity Details Modal -->
+    <div class="modal fade" id="activityModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="activityTitle"></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">التاريخ: <span id="activityDate"></span></p>
+                    <div id="activityDetails"></div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                </div>
+            </div>
+        </div>
+    </div>

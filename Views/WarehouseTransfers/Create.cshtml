@@ -1,0 +1,147 @@
+﻿@model erpv0._1.Models.WarehouseTransfer
+@{
+    ViewData["Title"] = "إنشاء طلب نقل";
+}
+
+<div class="container-fluid px-4 mt-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary bg-gradient">
+            <h4 class="mb-0 text-white">إنشاء طلب نقل جديد</h4>
+        </div>
+
+        <div class="card-body p-4">
+            <form asp-action="Create" id="createTransferForm">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <select asp-for="SourceWarehouseId" class="form-select" asp-items="ViewBag.SourceWarehouseId">
+                                <option value="">-- اختر المستودع المصدر --</option>
+                            </select>
+                            <label asp-for="SourceWarehouseId">المستودع المصدر</label>
+                            <span asp-validation-for="SourceWarehouseId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <select asp-for="DestWarehouseId" class="form-select" asp-items="ViewBag.DestWarehouseId">
+                                <option value="">-- اختر المستودع الوجهة --</option>
+                            </select>
+                            <label asp-for="DestWarehouseId">المستودع الوجهة</label>
+                            <span asp-validation-for="DestWarehouseId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-8">
+                        <div class="form-floating">
+                            <select asp-for="ProductId" class="form-select" asp-items="ViewBag.ProductId">
+                                <option value="">-- اختر المنتج --</option>
+                            </select>
+                            <label asp-for="ProductId">المنتج</label>
+                            <span asp-validation-for="ProductId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <input asp-for="Quantity" class="form-control" min="1" />
+                            <label asp-for="Quantity">الكمية</label>
+                            <span asp-validation-for="Quantity" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="d-flex gap-2 justify-content-start">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg"></i> إنشاء طلب النقل
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-lg"></i> إلغاء
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function() {
+            // Enhanced select2 dropdowns
+            $('.form-select').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                dir: 'rtl',
+                language: 'ar'
+            });
+
+            // Form validation
+            $("#createTransferForm").validate({
+                rules: {
+                    SourceWarehouseId: { required: true },
+                    DestWarehouseId: { required: true },
+                    ProductId: { required: true },
+                    Quantity: {
+                        required: true,
+                        min: 1
+                    }
+                },
+                messages: {
+                    SourceWarehouseId: "الرجاء اختيار المستودع المصدر",
+                    DestWarehouseId: "الرجاء اختيار المستودع الوجهة",
+                    ProductId: "الرجاء اختيار المنتج",
+                    Quantity: {
+                        required: "الرجاء إدخال الكمية",
+                        min: "يجب أن تكون الكمية أكبر من صفر"
+                    }
+                },
+                errorElement: 'span',
+                errorPlacement: function (error, element) {
+                    error.addClass('invalid-feedback');
+                    element.closest('.form-floating').append(error);
+                },
+                highlight: function (element, errorClass, validClass) {
+                    $(element).addClass('is-invalid');
+                },
+                unhighlight: function (element, errorClass, validClass) {
+                    $(element).removeClass('is-invalid');
+                }
+            });
+
+            // Prevent same warehouse selection
+            $('#DestWarehouseId').on('change', function() {
+                if ($(this).val() === $('#SourceWarehouseId').val() && $(this).val() !== '') {
+                    Swal.fire({
+                        title: 'تنبيه',
+                        text: 'لا يمكن اختيار نفس المستودع كمصدر ووجهة',
+                        icon: 'warning',
+                        confirmButtonText: 'حسناً'
+                    });
+                    $(this).val('').trigger('change');
+                }
+            });
+
+            $('#SourceWarehouseId').on('change', function() {
+                if ($(this).val() === $('#DestWarehouseId').val() && $(this).val() !== '') {
+                    Swal.fire({
+                        title: 'تنبيه',
+                        text: 'لا يمكن اختيار نفس المستودع كمصدر ووجهة',
+                        icon: 'warning',
+                        confirmButtonText: 'حسناً'
+                    });
+                    $(this).val('').trigger('change');
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,48 @@
+﻿@model IEnumerable<erpv0._1.Models.Product>
+@{
+    ViewData["Title"] = "إدارة المنتجات";
+}
+
+<div class="container mt-5 text-right">
+    <h1 class="mb-4">إدارة المنتجات</h1>
+    <a href="@Url.Action("Create", "Products")" class="btn btn-dark mb-3">إضافة منتج جديد</a>
+    <table id="productsTable" class="table table-hover table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>اسم المنتج</th>
+                <th>العلامة التجارية</th>
+                <th>الفئة</th>
+                <th>السعر</th>
+                <th>الإجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in Model)
+            {
+                <tr>
+                    <td>@product.ProductName</td>
+                    <td>@product.Brand?.BrandName</td>
+                    <td>@product.Category?.Name</td>
+                    <td>@product.ListPrice.ToString("C")</td>
+                    <td>
+                        <a href="@Url.Action("Details", "Products", new { id = product.ProductId })" class="btn btn-sm btn-info">عرض</a>
+                        <a href="@Url.Action("Edit", "Products", new { id = product.ProductId })" class="btn btn-sm btn-warning">تعديل</a>
+                        <a href="@Url.Action("Delete", "Products", new { id = product.ProductId })" class="btn btn-sm btn-danger">حذف</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#productsTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/ar.json'
+                }
+            });
+        });
+    </script>
+}

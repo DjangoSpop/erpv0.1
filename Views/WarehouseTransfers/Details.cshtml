@@ -1,0 +1,202 @@
+﻿@model erpv0._1.Models.WarehouseTransfer
+
+@{
+    ViewData["Title"] = "تفاصيل طلب النقل";
+    ViewData["Direction"] = "rtl";
+}
+@{
+    string GetStatusClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "pending" => "warning",
+            "inprogress" => "info",
+            "approved" => "success",
+            "cancelled" => "danger",
+            _ => "secondary"
+        };
+    }
+
+    string GetStatusText(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "pending" => "قيد الانتظار",
+            "inprogress" => "جاري التنفيذ",
+            "approved" => "تمت الموافقة",
+            "cancelled" => "ملغي",
+            _ => status
+        };
+    }
+}
+
+<div class="container-fluid" dir="rtl">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary bg-gradient d-flex justify-content-between align-items-center py-3">
+                    <h5 class="m-0 text-white">
+                        <i class="bi bi-info-circle me-2"></i>
+                        تفاصيل طلب النقل رقم #@Model.TransferId
+                    </h5>
+                    <div>
+                        @if (Model.Status == "Pending")
+                        {
+                            <button class="btn btn-success btn-sm me-2" onclick="updateStatus(@Model.TransferId, 'Approved')">
+                                <i class="bi bi-check-circle me-1"></i>موافقة
+                            </button>
+                            <button class="btn btn-danger btn-sm me-2" onclick="updateStatus(@Model.TransferId, 'Cancelled')">
+                                <i class="bi bi-x-circle me-1"></i>إلغاء
+                            </button>
+                        }
+                        <a asp-action="Index" class="btn btn-outline-light btn-sm">
+                            <i class="bi bi-arrow-right me-1"></i>عودة للقائمة
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Transfer Info -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title text-primary mb-3">معلومات النقل</h6>
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <th style="width: 40%">المنتج:</th>
+                                            <td>@Model.Product.ProductName</td>
+                                        </tr>
+                                        <tr>
+                                            <th>الكمية:</th>
+                                            <td>@Model.Quantity</td>
+                                        </tr>
+                                        <tr>
+                                            <th>الحالة:</th>
+                                            <td>
+                                                <span class="badge bg-@GetStatusClass(Model.Status)">
+                                                    @GetStatusText(Model.Status)
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>تاريخ الطلب:</th>
+                                            <td>@Model.RequestedDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                        </tr>
+                                        @if (Model.CompletedDate.HasValue)
+                                        {
+                                            <tr>
+                                                <th>تاريخ الإكتمال:</th>
+                                                <td>@Model.CompletedDate.Value.ToString("dd/MM/yyyy HH:mm")</td>
+                                            </tr>
+                                        }
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Warehouse Info -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title text-primary mb-3">معلومات المستودعات</h6>
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <th style="width: 40%">المستودع المصدر:</th>
+                                            <td>@Model.SourceWarehouse.Name</td>
+                                        </tr>
+                                        <tr>
+                                            <th>موقع المصدر:</th>
+                                            <td>@Model.SourceWarehouse.Location</td>
+                                        </tr>
+                                        <tr>
+                                            <th>المستودع الوجهة:</th>
+                                            <td>@Model.DestWarehouse.Name</td>
+                                        </tr>
+                                        <tr>
+                                            <th>موقع الوجهة:</th>
+                                            <td>@Model.DestWarehouse.Location</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Info -->
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title text-primary mb-3">معلومات النظام</h6>
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <th style="width: 200px">تم الإنشاء بواسطة:</th>
+                                            <td>@Model.CreatedBy</td>
+                                            <th style="width: 200px">تاريخ الإنشاء:</th>
+                                            <td>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                        </tr>
+                                        @if (Model.UpdatedAt.HasValue)
+                                        {
+                                            <tr>
+                                                <th>آخر تحديث بواسطة:</th>
+                                                <td>@Model.UpdatedBy</td>
+                                                <th>تاريخ التحديث:</th>
+                                                <td>@Model.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</td>
+                                            </tr>
+                                        }
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function getStatusClass(status) {
+            switch (status?.toLowerCase()) {
+                case 'pending': return 'warning';
+                case 'approved': return 'success';
+                case 'cancelled': return 'danger';
+                default: return 'secondary';
+            }
+        }
+
+        function getStatusText(status) {
+            switch (status?.toLowerCase()) {
+                case 'pending': return 'قيد الانتظار';
+                case 'approved': return 'تمت الموافقة';
+                case 'cancelled': return 'ملغي';
+                default: return status;
+            }
+        }
+
+        function updateStatus(id, status) {
+            if (!confirm('هل أنت متأكد من تغيير حالة طلب النقل؟')) return;
+
+            $.ajax({
+                url: '/WarehouseTransfers/UpdateStatus',
+                type: 'POST',
+                data: {
+                    id: id,
+                    status: status,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    if (response.success) {
+                        toastr.success(response.message);
+                        setTimeout(() => window.location.reload(), 1500);
+                    } else {
+                        toastr.error(response.message);
+                    }
+                },
+                error: function () {
+                    toastr.error('حدث خطأ أثناء تحديث الحالة');
+                }
+            });
+        }
+    </script>
+}

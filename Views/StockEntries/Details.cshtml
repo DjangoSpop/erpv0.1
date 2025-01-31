@@ -1,0 +1,207 @@
+﻿@model erpv0._1.Models.StockEntry
+
+<div class="container-fluid px-4" dir="rtl">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header Card -->
+            <div class="card bg-dark text-white shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 mb-2">تفاصيل إدخال المخزون</h1>
+                            <div class="text-white-50">رقم الدفعة: @Model.BatchNumber</div>
+                        </div>
+                        <div class="btn-toolbar gap-2">
+                            <a href="@Url.Action("Edit", new { id = Model.EntryId })" class="btn btn-warning">
+                                <i class="bi bi-pencil me-2"></i>تعديل
+                            </a>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                                <i class="bi bi-arrow-right me-2"></i>عودة للقائمة
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- Main Info Card -->
+                <div class="col-md-8">
+                    <div class="card bg-dark text-white shadow-sm border-0">
+                        <div class="card-header bg-primary">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-info-circle me-2"></i>المعلومات الأساسية
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                                        <small class="text-white-50 d-block">المنتج</small>
+                                        <span class="fs-5">@Model.Product.ProductName</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                                        <small class="text-white-50 d-block">المستودع</small>
+                                        <span class="fs-5">@Model.Warehouse.Name</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                                        <small class="text-white-50 d-block">تاريخ الاستلام</small>
+                                        <span class="fs-5">@Model.ReceiptDate.ToString("dd/MM/yyyy")</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                                        <small class="text-white-50 d-block">رقم فاتورة المورد</small>
+                                        <span class="fs-5">@Model.SupplierInvoice</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock Info Card -->
+                <div class="col-md-4">
+                    <div class="card bg-dark text-white shadow-sm border-0">
+                        <div class="card-header bg-success">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-box-seam me-2"></i>معلومات المخزون
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex flex-column gap-3">
+                                <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                                    <small class="text-white-50">الكمية</small>
+                                    <div class="fs-3 fw-bold">@Model.Quantity</div>
+                                </div>
+                                <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                                    <small class="text-white-50">سعر التكلفة</small>
+                                    <div class="fs-3 fw-bold">@Model.CostPrice.ToString("N2")</div>
+                                </div>
+                                <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                                    <small class="text-white-50">سعر البيع</small>
+                                    <div class="fs-3 fw-bold">@Model.SellingPrice.ToString("N2")</div>
+                                </div>
+                                <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                                    <small class="text-white-50">الخصم الأقصى</small>
+                                    <div class="fs-3 fw-bold">@Model.MaxDiscount.ToString("N2")</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock Movements -->
+                @if (Model.StockMovements.Any())
+                {
+                    <div class="col-12">
+                        <div class="card bg-dark text-white shadow-sm border-0">
+                            <div class="card-header bg-info">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-arrow-left-right me-2"></i>حركات المخزون
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-dark table-hover align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>التاريخ</th>
+                                                <th>نوع الحركة</th>
+                                                <th>الكمية</th>
+                                                <th>المرجع</th>
+                                                <th>بواسطة</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var movement in Model.StockMovements.OrderByDescending(m => m.MovementDate))
+                                            {
+                                                <tr>
+                                                    <td>@movement.MovementDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                                    <td>
+                                                        <span class="badge @(movement.MovementType == "IN" ? "bg-success" : "bg-danger")">
+                                                            @(movement.MovementType == "IN" ? "وارد" : "صادر")
+                                                        </span>
+                                                    </td>
+                                                    <td>@movement.Quantity</td>
+                                                    <td>@movement.Reference</td>
+                                                    <td>@movement.CreatedBy</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Audit Info -->
+                <div class="col-12">
+                    <div class="card bg-dark text-white shadow-sm border-0">
+                        <div class="card-header bg-secondary">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-clock-history me-2"></i>معلومات التدقيق
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                                        <div class="text-white-50 mb-1">أنشئ بواسطة</div>
+                                        <div>@Model.CreatedBy</div>
+                                        <small class="text-white-50">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                                    </div>
+                                </div>
+                                @if (Model.UpdatedAt.HasValue)
+                                {
+                                    <div class="col-md-6">
+                                        <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                                            <div class="text-white-50 mb-1">آخر تحديث بواسطة</div>
+                                            <div>@Model.UpdatedBy</div>
+                                            <small class="text-white-50">@Model.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</small>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .badge {
+            padding: 0.5rem 0.75rem;
+            font-weight: 500;
+        }
+
+        .bg-secondary.bg-opacity-10 {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .card {
+            border-radius: 0.5rem;
+        }
+
+        .table-dark {
+            background-color: transparent;
+            color: #fff;
+        }
+
+            .table-dark td,
+            .table-dark th {
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+    </style>
+}

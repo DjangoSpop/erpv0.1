@@ -1,0 +1,46 @@
+﻿@model IEnumerable<erpv0._1.Models.ProductCategory>
+@{
+    ViewData["Title"] = "إدارة الفئات";
+}
+
+<div class="container mt-5 text-right">
+    <h1 class="mb-4">إدارة الفئات</h1>
+    <a href="@Url.Action("Create", "ProductCategories")" class="btn btn-dark mb-3">إضافة فئة جديدة</a>
+    <table id="categoriesTable" class="table table-hover table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>اسم الفئة</th>
+                <th>الوصف</th>
+                <th>الفئة الرئيسية</th>
+                <th>الإجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var category in Model)
+            {
+                <tr>
+                    <td>@category.Name</td>
+                    <td>@category.Description</td>
+                    <td>@category.ParentCategoryId</td>
+                    <td>
+                        <a href="@Url.Action("Details", "ProductCategories", new { id = category.CategoryId })" class="btn btn-sm btn-info">عرض</a>
+                        <a href="@Url.Action("Edit", "ProductCategories", new { id = category.CategoryId })" class="btn btn-sm btn-warning">تعديل</a>
+                        <a href="@Url.Action("Delete", "ProductCategories", new { id = category.CategoryId })" class="btn btn-sm btn-danger">حذف</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#categoriesTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/ar.json'
+                }
+            });
+        });
+    </script>
+}

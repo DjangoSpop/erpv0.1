@@ -1,0 +1,101 @@
+﻿@model erpv0._1.Models.StockMovement
+
+<div class="container-fluid p-4" dir="rtl">
+    <!-- Header -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-1">حذف حركة مخزون</h4>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">الرئيسية</a></li>
+                            <li class="breadcrumb-item"><a href="@Url.Action("Index")">حركات المخزون</a></li>
+                            <li class="breadcrumb-item active">حذف</li>
+                        </ol>
+                    </nav>
+                </div>
+                <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-right me-1"></i>رجوع
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Card -->
+    <div class="card shadow-sm border-danger">
+        <div class="card-header bg-danger text-white">
+            <i class="bi bi-exclamation-triangle me-2"></i>تأكيد الحذف
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-circle me-2"></i>
+                هل أنت متأكد من حذف حركة المخزون هذه؟ لا يمكن التراجع عن هذا الإجراء.
+            </div>
+
+            <!-- Movement Details -->
+            <div class="card bg-light mb-4">
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">معلومات الحركة</h6>
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">رقم المرجع</dt>
+                                <dd class="col-sm-8">@Model.Reference</dd>
+
+                                <dt class="col-sm-4">نوع الحركة</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge bg-@(Model.MovementType == "IN" ? "success" : "danger")">
+                                        @(Model.MovementType == "IN" ? "وارد" : "صادر")
+                                    </span>
+                                </dd>
+
+                                <dt class="col-sm-4">الكمية</dt>
+                                <dd class="col-sm-8">@Model.Quantity</dd>
+
+                                <dt class="col-sm-4">تاريخ الحركة</dt>
+                                <dd class="col-sm-8">@Model.MovementDate.ToString("yyyy/MM/dd HH:mm")</dd>
+                            </dl>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">معلومات المنتج والمخزون</h6>
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">المنتج</dt>
+                                <dd class="col-sm-8">@Model.Product.ProductName</dd>
+
+                                <dt class="col-sm-4">المستودع</dt>
+                                <dd class="col-sm-8">@Model.StockEntry.WarehouseId</dd>
+
+                                <dt class="col-sm-4">رقم الدفعة</dt>
+                                <dd class="col-sm-8">@Model.StockEntry.BatchNumber</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form asp-action="Delete" id="deleteForm">
+                <input type="hidden" asp-for="MovementId" />
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="@Url.Action("Index")" class="btn btn-light">إلغاء</a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i>تأكيد الحذف
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#deleteForm').on('submit', function(e) {
+                if (!confirm('هل أنت متأكد من حذف هذه الحركة؟ لا يمكن التراجع عن هذا الإجراء.')) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,36 @@
+﻿@model erpv0._1.Models.Warehouse
+
+@{
+    ViewData["Title"] = "حذف المستودع";
+}
+
+<div class="container-fluid px-4" dir="rtl">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card bg-dark text-white shadow-lg border-0 rounded-lg mt-5">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="mb-0">حذف المستودع</h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-white">هل أنت متأكد أنك تريد حذف المستودع التالي؟</p>
+                    <ul class="list-unstyled text-white">
+                        <li><strong>الكود:</strong> @Model.Code</li>
+                        <li><strong>الاسم:</strong> @Model.Name</li>
+                        <li><strong>الموقع:</strong> @Model.Location</li>
+                    </ul>
+
+                    <form asp-action="Delete" method="post">
+                        <input type="hidden" name="WarehouseId" value="@Model.WarehouseId" />
+
+                        <div class="mt-4 text-center">
+                            <button type="submit" class="btn btn-danger px-4">
+                                <i class="bi bi-trash"></i> حذف
+                            </button>
+                            <a href="@Url.Action("Index", "Warehouses")" class="btn btn-secondary px-4">إلغاء</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

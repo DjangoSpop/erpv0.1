@@ -1,0 +1,104 @@
+﻿@model erpv0._1.Models.ViewModels.ProductVariantViewModel
+
+<div class="container-fluid px-4 mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-0 rounded-3 border-danger">
+                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-trash me-2"></i> تأكيد حذف متغير المنتج
+                    </h5>
+                </div>
+
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        هل أنت متأكد من رغبتك في حذف هذا المتغير؟
+                        <strong>لا يمكن التراجع عن هذه العملية</strong>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-muted">المنتج</h6>
+                                    <p>@Model.Products</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-muted">المقاس</h6>
+                                    <p>@Model.Size</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-muted">اللون</h6>
+                                    <span class="badge" style="background-color: @Model.Color; color: white;">
+                                        @Model.Color
+                                    </span>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-muted">النمط</h6>
+                                    <p>@Model.Style</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-muted">تعديل السعر</h6>
+                                    <p>@Model.PriceAdjustment.ToString("C")</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-muted">الحالة</h6>
+                                    <span class="badge @(Model.IsActive == true ? "bg-success" : "bg-danger")">
+                                        @(Model.IsActive == true ? "نشط" : "غير نشط")
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dependency Check -->
+                    <div id="dependencyWarning" class="alert alert-danger d-none" role="alert">
+                        <i class="bi bi-shield-exclamation me-2"></i>
+                        لا يمكن حذف هذا المتغير لوجود مدخلات مخزون مرتبطة
+                    </div>
+
+                    <form asp-action="DeleteConfirmed" method="post">
+                        <input type="hidden" asp-for="VariantId" />
+
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" id="deleteButton" class="btn btn-danger">
+                                <i class="bi bi-trash me-1"></i> تأكيد الحذف
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-x-circle me-1"></i> إلغاء
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Check for dependencies before deletion
+            function checkDependencies() {
+                $.ajax({
+                    url: '@Url.Action("CheckVariantDependencies", "ProductVariants")',
+                    type: 'GET',
+                    data: { variantId: @Model.VariantId },
+                    success: function(result) {
+                        if (result.hasDependencies) {
+                            $('#dependencyWarning').removeClass('d-none');
+                            $('#deleteButton').prop('disabled', true);
+                        }
+                    },
+                    error: function() {
+                        console.error('خطأ في التحقق من التبعيات');
+                    }
+                });
+            }
+
+            // Run dependency check on page load
+            checkDependencies();
+        });
+    </script>
+}

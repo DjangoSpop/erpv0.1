@@ -1,0 +1,270 @@
+﻿@model erpv0._1.Models.StockEntry
+
+<div class="container-fluid px-4" dir="rtl">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card bg-dark text-white shadow-lg border-0 rounded-lg mt-4">
+                <!-- Card Header -->
+                <div class="card-header bg-primary bg-gradient text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="mb-0">إضافة إدخال مخزون جديد</h3>
+                        <a href="@Url.Action("Index")" class="btn btn-outline-light btn-sm">
+                            <i class="bi bi-arrow-right"></i> عودة للقائمة
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Card Body -->
+                <div class="card-body">
+                    <form asp-action="Create" method="post" class="needs-validation" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-3"></div>
+
+                        <!-- Basic Information Section -->
+                        <div class="card bg-secondary bg-opacity-10 mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">المعلومات الأساسية</h5>
+                                <div class="row g-3">
+                                    <!-- Product Selection -->
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <select asp-for="ProductId" class="form-select bg-dark text-white border-secondary"
+                                                    asp-items="@(ViewBag.Products)" required>
+                                                <option value="">اختر المنتج</option>
+                                            </select>
+                                            <label asp-for="ProductId">المنتج</label>
+                                            <div class="invalid-feedback">يرجى اختيار المنتج</div>
+                                            <span asp-validation-for="ProductId" class="text-danger"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Warehouse Selection -->
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <select asp-for="WarehouseId" class="form-select bg-dark text-white border-secondary"
+                                                    asp-items="@(ViewBag.Warehouses)" required>
+                                                <option value="">اختر المستودع</option>
+                                            </select>
+                                            <label asp-for="WarehouseId">المستودع</label>
+                                            <div class="invalid-feedback">يرجى اختيار المستودع</div>
+                                            <span asp-validation-for="WarehouseId" class="text-danger"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Batch Number -->
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input asp-for="BatchNumber" class="form-control bg-dark text-white border-secondary"
+                                                   placeholder=" " required maxlength="50" />
+                                            <label asp-for="BatchNumber">رقم الدفعة</label>
+                                            <div class="invalid-feedback">يرجى إدخال رقم الدفعة</div>
+                                            <span asp-validation-for="BatchNumber" class="text-danger"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Receipt Date -->
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input asp-for="ReceiptDate" type="date" class="form-control bg-dark text-white border-secondary"
+                                                   required value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                                            <label asp-for="ReceiptDate">تاريخ الاستلام</label>
+                                            <div class="invalid-feedback">يرجى إدخال تاريخ الاستلام</div>
+                                            <span asp-validation-for="ReceiptDate" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quantities and Prices Section -->
+                        <div class="card bg-secondary bg-opacity-10 mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">الكميات والأسعار</h5>
+                                <div class="row g-3">
+                                    <!-- Quantity -->
+                                    <div class="col-md-4">
+                                        <div class="form-floating">
+                                            <input asp-for="Quantity" type="number" class="form-control bg-dark text-white border-secondary"
+                                                   min="1" required />
+                                            <label asp-for="Quantity">الكمية</label>
+                                            <div class="invalid-feedback">يرجى إدخال كمية صحيحة</div>
+                                            <span asp-validation-for="Quantity" class="text-danger"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Cost Price -->
+                                    <div class="col-md-4">
+                                        <div class="form-floating">
+                                            <input asp-for="CostPrice" type="number" step="0.01" class="form-control bg-dark text-white border-secondary"
+                                                   min="0.01" required />
+                                            <label asp-for="CostPrice">سعر التكلفة</label>
+                                            <div class="invalid-feedback">يرجى إدخال سعر التكلفة</div>
+                                            <span asp-validation-for="CostPrice" class="text-danger"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Selling Price -->
+                                    <div class="col-md-4">
+                                        <div class="form-floating">
+                                            <input asp-for="SellingPrice" type="number" step="0.01" class="form-control bg-dark text-white border-secondary"
+                                                   min="0.01" required />
+                                            <label asp-for="SellingPrice">سعر البيع</label>
+                                            <div class="invalid-feedback">يرجى إدخال سعر البيع</div>
+                                            <span asp-validation-for="SellingPrice" class="text-danger"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Max Discount -->
+                                    <div class="col-md-4">
+                                        <div class="form-floating">
+                                            <input asp-for="MaxDiscount" type="number" step="0.01" class="form-control bg-dark text-white border-secondary"
+                                                   min="0" value="0" />
+                                            <label asp-for="MaxDiscount">الخصم الأقصى</label>
+                                            <span asp-validation-for="MaxDiscount" class="text-danger"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Supplier Invoice -->
+                                    <div class="col-md-8">
+                                        <div class="form-floating">
+                                            <input asp-for="SupplierInvoice" class="form-control bg-dark text-white border-secondary"
+                                                   required maxlength="100" />
+                                            <label asp-for="SupplierInvoice">رقم فاتورة المورد</label>
+                                            <div class="invalid-feedback">يرجى إدخال رقم فاتورة المورد</div>
+                                            <span asp-validation-for="SupplierInvoice" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary px-5 me-2">
+                                <i class="bi bi-check-lg me-2"></i>حفظ
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary px-5">
+                                <i class="bi bi-x-lg me-2"></i>إلغاء
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function() {
+            // Initialize Select2 with dark theme
+            $('.form-select').select2({
+                theme: 'bootstrap-5',
+                dir: 'rtl',
+                language: 'ar',
+                width: '100%'
+            });
+
+            // Price validation
+            $('#SellingPrice').on('change', function() {
+                const costPrice = parseFloat($('#CostPrice').val()) || 0;
+                const sellingPrice = parseFloat($(this).val()) || 0;
+
+                if (sellingPrice < costPrice) {
+                    Swal.fire({
+                        title: 'تنبيه',
+                        text: 'سعر البيع أقل من سعر التكلفة!',
+                        icon: 'warning',
+                        confirmButtonText: 'فهمت'
+                    });
+                }
+            });
+
+            // Form validation
+            const form = document.querySelector('.needs-validation');
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+
+            // Auto-calculate total values
+            function updateTotals() {
+                const quantity = parseFloat($('#Quantity').val()) || 0;
+                const costPrice = parseFloat($('#CostPrice').val()) || 0;
+                const totalCost = quantity * costPrice;
+
+                // You can add UI elements to display these calculations if needed
+                console.log('Total Cost:', totalCost);
+            }
+
+            $('#Quantity, #CostPrice').on('change', updateTotals);
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .form-floating > .form-control,
+        .form-floating > .form-select {
+            background-color: #2c2c44 !important;
+            color: #fff !important;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+            .form-floating > .form-control:focus,
+            .form-floating > .form-select:focus {
+                border-color: #4e73df;
+                box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+            }
+
+        .form-floating > label {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .select2-container--bootstrap-5 .select2-selection {
+            background-color: #2c2c44 !important;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .select2-container--bootstrap-5 .select2-selection__rendered {
+            color: #fff !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-dropdown {
+            background-color: #2c2c44;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option {
+            color: #fff;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option--highlighted {
+            background-color: #4e73df !important;
+        }
+
+        .card {
+            border: none;
+        }
+
+        .card-title {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .was-validated .form-control:valid,
+        .was-validated .form-select:valid {
+            border-color: #198754;
+            background-color: #2c2c44 !important;
+        }
+
+        .was-validated .form-control:invalid,
+        .was-validated .form-select:invalid {
+            border-color: #dc3545;
+            background-color: #2c2c44 !important;
+        }
+    </style>
+}

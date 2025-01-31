@@ -1,0 +1,125 @@
+﻿@model erpv0._1.Models.StockMovement
+
+@{
+    ViewData["Title"] = "تفاصيل حركة المخزون";
+}
+
+<div class="container-fluid px-4" dir="rtl">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-lg mt-4">
+                <div class="card-header bg-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="mb-0 fs-4">
+                            <i class="bi bi-info-circle me-2"></i>
+                            تفاصيل حركة المخزون
+                        </h3>
+                        <div>
+                            <button class="btn btn-outline-light btn-sm" onclick="window.print()">
+                                <i class="bi bi-printer"></i> طباعة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="border rounded p-3">
+                                <h5 class="text-primary mb-3">معلومات المنتج</h5>
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-4">المنتج:</dt>
+                                    <dd class="col-sm-8">@Model.Product.ProductName</dd>
+
+                                    <dt class="col-sm-4">الكمية:</dt>
+                                    <dd class="col-sm-8">@Model.Quantity</dd>
+
+                                    <dt class="col-sm-4">نوع الحركة:</dt>
+                                    <dd class="col-sm-8">
+                                        @if (Model.MovementType == "IN")
+                                        {
+                                            <span class="badge bg-success rounded-pill">
+                                                <i class="bi bi-box-arrow-in-right me-1"></i> وارد
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger rounded-pill">
+                                                <i class="bi bi-box-arrow-right me-1"></i> صادر
+                                            </span>
+                                        }
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="border rounded p-3">
+                                <h5 class="text-primary mb-3">معلومات الحركة</h5>
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-4">المستودع:</dt>
+                                    <dd class="col-sm-8">@Model.StockEntry.WarehouseId</dd>
+
+                                    <dt class="col-sm-4">التاريخ:</dt>
+                                    <dd class="col-sm-8">@Model.MovementDate.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                                    <dt class="col-sm-4">المرجع:</dt>
+                                    <dd class="col-sm-8">@Model.Reference</dd>
+                                </dl>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="border rounded p-3">
+                                <h5 class="text-primary mb-3">معلومات النظام</h5>
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-3">تاريخ الإنشاء:</dt>
+                                    <dd class="col-sm-3">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                                    <dt class="col-sm-3">بواسطة:</dt>
+                                    <dd class="col-sm-3">@Model.CreatedBy</dd>
+
+                                    @if (Model.UpdatedAt.HasValue)
+                                    {
+                                        <dt class="col-sm-3">تاريخ التحديث:</dt>
+                                        <dd class="col-sm-3">@Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                                        <dt class="col-sm-3">تم التحديث بواسطة:</dt>
+                                        <dd class="col-sm-3">@Model.UpdatedBy</dd>
+                                    }
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Model.Transfer != null)
+                    {
+                        <div class="border rounded p-3 mt-4">
+                            <h5 class="text-primary mb-3">معلومات النقل</h5>
+                            <dl class="row mb-0">
+                                <dt class="col-sm-3">من مستودع:</dt>
+                                <dd class="col-sm-3">@Model.Transfer.SourceWarehouse.Name</dd>
+
+                                <dt class="col-sm-3">إلى مستودع:</dt>
+                                <dd class="col-sm-3">@Model.Transfer.DestWarehouse.Name</dd>
+
+                                <dt class="col-sm-3">حالة النقل:</dt>
+                                <dd class="col-sm-3">@Model.Transfer.Status</dd>
+
+                                <dt class="col-sm-3">تم الموافقة بواسطة:</dt>
+                                <dd class="col-sm-3">@Model.Transfer.ApprovedBy</dd>
+                            </dl>
+                        </div>
+                    }
+                </div>
+
+                <div class="card-footer bg-light text-center py-3">
+                    <a href="@Url.Action("Index")" class="btn btn-secondary">
+                        <i class="bi bi-arrow-right me-1"></i>
+                        رجوع للقائمة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

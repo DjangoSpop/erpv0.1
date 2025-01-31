@@ -1,0 +1,38 @@
+﻿@model erpv0._1.Models.ProductTranslation
+@{
+    ViewData["Title"] = "إضافة ترجمة جديدة";
+}
+
+<div class="container mt-5 text-right">
+    <h1 class="mb-4">إضافة ترجمة جديدة</h1>
+    <form asp-action="Create" method="post">
+        <div class="form-group mb-3">
+            <label for="ProductId" class="form-label">المنتج</label>
+            <select asp-for="ProductId" asp-items="ViewBag.ProductId" class="form-select">
+                <option value="">اختر المنتج</option>
+            </select>
+            <span asp-validation-for="ProductId" class="text-danger"></span>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="Language" class="form-label">اللغة</label>
+            <input asp-for="Language" class="form-control" placeholder="أدخل اللغة" />
+            <span asp-validation-for="Language" class="text-danger"></span>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="Name" class="form-label">الاسم</label>
+            <input asp-for="Name" class="form-control" placeholder="أدخل الاسم" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="Description" class="form-label">الوصف</label>
+            <textarea asp-for="Description" class="form-control" placeholder="أدخل الوصف"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-dark">إضافة</button>
+        <a href="@Url.Action("Index", "ProductTranslations")" class="btn btn-secondary">إلغاء</a>
+    </form>
+</div>

@@ -1,0 +1,108 @@
+﻿@model erpv0._1.Models.StockMovement
+
+<div class="modal fade" id="movementDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-info-circle me-1"></i>
+                    تفاصيل حركة المخزون
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="border rounded p-3">
+                            <h6 class="text-primary mb-3">معلومات المنتج</h6>
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">المنتج:</dt>
+                                <dd class="col-sm-8">@Model.Product.ProductName</dd>
+
+                                <dt class="col-sm-4">الكمية:</dt>
+                                <dd class="col-sm-8">@Model.Quantity</dd>
+
+                                <dt class="col-sm-4">نوع الحركة:</dt>
+                                <dd class="col-sm-8">
+                                    @if (Model.MovementType == "IN")
+                                    {
+                                        <span class="badge bg-success">وارد</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">صادر</span>
+                                    }
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="border rounded p-3">
+                            <h6 class="text-primary mb-3">معلومات الحركة</h6>
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">المستودع:</dt>
+                                <dd class="col-sm-8">@Model.StockEntry.Warehouse</dd>
+
+                                <dt class="col-sm-4">التاريخ:</dt>
+                                <dd class="col-sm-8">@Model.MovementDate.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                                <dt class="col-sm-4">المرجع:</dt>
+                                <dd class="col-sm-8">@Model.Reference</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <a href="@Url.Action("Details", new { id = Model.MovementId })" class="btn btn-primary">
+                    عرض التفاصيل الكاملة
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+        });
+
+        // Quick view modal function
+        function showMovementDetails(id) {
+            $.get(`/StockMovements/GetDetails/${id}`, function(response) {
+                $('#quickViewContent').html(response);
+                $('#movementDetailsModal').modal('show');
+            });
+        }
+
+        // Print function
+        function printDetails() {
+            window.print();
+        }
+    </script>
+}
+
+@section Styles {
+    <style media="print">
+        .no-print {
+            display: none !important;
+        }
+
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        .card-header {
+            background-color: white !important;
+            color: black !important;
+        }
+    </style>
+}

@@ -1,0 +1,292 @@
+/* wwwroot/css/site.css */
+
+/* RTL Support */
+[dir='rtl'] .navbar-nav {
+    padding-right: 0;
+}
+
+[dir='rtl'] .dropdown-menu {
+    text-align: right;
+}
+
+[dir='rtl'] .ms-auto {
+    margin-left: unset !important;
+    margin-right: auto !important;
+}
+
+/* Custom Styles */
+.table-responsive {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+.card {
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    border: none;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: none;
+}
+.dark-mode {
+    background-color: #121212;
+    color: white;
+}
+
+    .dark-mode .table {
+        color: white;
+    }
+/* Search and Filter Styles */
+.search-box {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+    .search-box .form-control {
+        padding-left: 2.5rem;
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+/* Form Styling */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.validation-message {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* DataTable Enhancements */
+.datatable-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.datatable-filters {
+    display: flex;
+    gap: 1rem;
+}
+
+/* Export Buttons */
+.export-buttons {
+    margin-bottom: 1rem;
+}
+
+    .export-buttons .btn {
+        margin-right: 0.5rem;
+    }
+
+/* Dashboard Cards */
+.stat-card {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: transform 0.3s ease;
+}
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-card .icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .stat-card .title {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+
+    .stat-card .value {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+/* Dashboard Styles */
+.dashboard-container {
+    padding: 1.5rem 0;
+}
+
+/* Stat Cards */
+.stat-card {
+    border: none;
+    border-radius: 10px;
+    transition: transform 0.2s ease;
+}
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+.stat-icon {
+    opacity: 0.8;
+}
+
+/* Charts */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.05);
+    margin-bottom: 1rem;
+}
+
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    padding: 1rem;
+}
+
+.card-title {
+    color: #495057;
+    font-weight: 600;
+}
+
+/* Recent Activities Table */
+.table {
+    margin-bottom: 0;
+}
+
+    .table th {
+        border-top: none;
+        color: #6c757d;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .table td {
+        vertical-align: middle;
+        color: #495057;
+    }
+
+.badge {
+    font-weight: 500;
+    padding: 0.5em 0.75em;
+}
+
+/* Metrics */
+.metric-item {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+    .metric-item:last-child {
+        border-bottom: none;
+    }
+
+.metric-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.metric-value {
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+/* RTL Support */
+[dir="rtl"] .stat-icon {
+    margin-left: 0;
+    margin-right: auto;
+}
+
+[dir="rtl"] .metric-item {
+    flex-direction: row-reverse;
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stat-card, .card {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Dark Mode Support (if needed) */
+@media (prefers-color-scheme: dark) {
+    .card {
+        background-color: #2d3748;
+    }
+
+    .card-title, .metric-value {
+        color: #e2e8f0;
+    }
+
+    .metric-label {
+        color: #a0aec0;
+    }
+
+    .table td {
+        color: #e2e8f0;
+    }
+}
+body {
+    background-color: #1e1e2f;
+    color: #ffffff;
+}
+
+h1, h2, h3, label {
+    color: #ffffff;
+}
+
+.btn-dark {
+    background-color: #2a3f54;
+    border-color: #2a3f54;
+    color: #ffffff;
+}
+
+    .btn-dark:hover {
+        background-color: #1a293e;
+        border-color: #1a293e;
+    }
+
+.table {
+    color: #ffffff;
+    background-color: #2a3f54;
+    border: 1px solid #3a3f54;
+}
+
+    .table thead {
+        background-color: #1a293e;
+    }

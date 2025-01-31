@@ -1,0 +1,342 @@
+﻿@model erpv0._1.Models.ViewModels.StockReportViewModel
+<div class="container-fluid p-4" dir="rtl">
+    <!-- Header -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-1">تقرير المخزون الشامل</h4>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-clock me-1"></i>
+                    آخر تحديث: @Model.Statistics.LastUpdated.ToString("yyyy/MM/dd HH:mm")
+                </p>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-outline-primary" onclick="exportReport('excel')">
+                    <i class="bi bi-file-excel me-1"></i>تصدير Excel
+                </button>
+                <button class="btn btn-outline-primary" onclick="exportReport('pdf')">
+                    <i class="bi bi-file-pdf me-1"></i>تصدير PDF
+                </button>
+                <button class="btn btn-outline-primary" onclick="window.print()">
+                    <i class="bi bi-printer me-1"></i>طباعة
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted mb-1">إجمالي المنتجات</p>
+                            <h3 class="mb-0">@Model.Statistics.TotalProducts</h3>
+                            <small class="text-success">
+                                <i class="bi bi-arrow-up me-1"></i>
+                                @Model.Statistics.ActiveProducts منتج نشط
+                            </small>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-box text-primary fs-3"></i>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 5px;">
+                        <div class="progress-bar" style="width: @(((double)Model.Statistics.ActiveProducts / Model.Statistics.TotalProducts) * 100)%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted mb-1">قيمة المخزون</p>
+                            <h3 class="mb-0">@Model.Statistics.TotalInventoryValue.ToString("N2")</h3>
+                            <small class="text-muted">
+                                متوسط: @Model.Statistics.AverageStockValue.ToString("N2")
+                            </small>
+                        </div>
+                        <div class="bg-success bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-cash-stack text-success fs-3"></i>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 5px;">
+                        <div class="progress-bar bg-success" style="width: 75%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted mb-1">حالة المخزون</p>
+                            <h3 class="mb-0">@Model.Statistics.LowStockItems</h3>
+                            <small class="text-warning">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                منتجات تحتاج تجديد
+                            </small>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-graph-down text-warning fs-3"></i>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 5px;">
+                        <div class="progress-bar bg-warning" style="width: @(((double)Model.Statistics.LowStockItems / Model.Statistics.TotalProducts) * 100)%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted mb-1">التحويلات المعلقة</p>
+                            <h3 class="mb-0">@Model.Statistics.PendingTransfers</h3>
+                            <small class="text-danger">
+                                <i class="bi bi-clock-history me-1"></i>
+                                تحتاج متابعة
+                            </small>
+                        </div>
+                        <div class="bg-danger bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-arrow-left-right text-danger fs-3"></i>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 5px;">
+                        <div class="progress-bar bg-danger" style="width: 45%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="card-title mb-0">حركة المخزون</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="stockTrendChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="card-title mb-0">توزيع المخزون حسب الفئات</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryDistributionChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Movements -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-transparent">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">آخر الحركات</h5>
+                <div class="d-flex gap-2">
+                    <input type="text" class="form-control" placeholder="بحث..." id="movementSearch">
+                    <select class="form-select" id="movementTypeFilter">
+                        <option value="">كل الحركات</option>
+                        <option value="IN">وارد</option>
+                        <option value="OUT">صادر</option>
+                        <option value="TRANSFER">تحويل</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="movementsTable">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>المنتج</th>
+                            <th>نوع الحركة</th>
+                            <th>الكمية</th>
+                            <th>القيمة</th>
+                            <th>المرجع</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var movement in Model.RecentMovements)
+                        {
+                            <tr>
+                                <td>@movement.Date.ToString("yyyy/MM/dd HH:mm")</td>
+                                <td>@movement.ProductName</td>
+                                <td>
+                                    <span class="badge bg-@GetMovementBadgeColor(movement.MovementType)">
+                                        @GetMovementTypeDisplay(movement.MovementType)
+                                    </span>
+                                </td>
+                                <td>@movement.Quantity</td>
+                                <td>@movement.TotalValue.ToString("N2")</td>
+                                <td>@movement.ReferenceNumber</td>
+                                <td>
+                                    <span class="badge bg-@GetStatusBadgeColor(movement.Status)">
+                                        @movement.Status
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private string GetMovementBadgeColor(string type) => type switch
+    {
+        "IN" => "success",
+        "OUT" => "danger",
+        "TRANSFER" => "info",
+        _ => "secondary"
+    };
+
+    private string GetStatusBadgeColor(string status) => status switch
+    {
+        "Completed" => "success",
+        "Pending" => "warning",
+        "Cancelled" => "danger",
+        _ => "secondary"
+    };
+
+    private string GetMovementTypeDisplay(string type) => type switch
+    {
+        "IN" => "وارد",
+        "OUT" => "صادر",
+        "TRANSFER" => "تحويل",
+        _ => type
+    };
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Initialize Charts
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeStockTrendChart();
+            initializeCategoryDistributionChart();
+            initializeSearchAndFilters();
+        });
+
+        function initializeStockTrendChart() {
+            const ctx = document.getElementById('stockTrendChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [@Html.Raw(string.Join(",", Model.TrendData.Select(t => $"'{t.Date:MM/dd}'")))],
+                    datasets: [{
+                        label: 'المخزون',
+                        data: [@string.Join(",", Model.TrendData.Select(t => t.TotalStock))],
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+        }
+
+        function initializeCategoryDistributionChart() {
+            const ctx = document.getElementById('categoryDistributionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [@Html.Raw(string.Join(",", Model.CategoryDistribution.Select(c => $"'{c.CategoryName}'")))],
+                    datasets: [{
+                        data: [@string.Join(",", Model.CategoryDistribution.Select(c => c.TotalValue))],
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.5)',
+                            'rgba(54, 162, 235, 0.5)',
+                            'rgba(255, 206, 86, 0.5)',
+                            'rgba(75, 192, 192, 0.5)'
+                        ]
+                    }]
+                }
+            });
+        }
+
+        function initializeSearchAndFilters() {
+            const searchInput = document.getElementById('movementSearch');
+            const typeFilter = document.getElementById('movementTypeFilter');
+            const table = document.getElementById('movementsTable');
+
+            function filterTable() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const filterType = typeFilter.value;
+                const rows = table.getElementsByTagName('tr');
+
+                Array.from(rows).slice(1).forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    const type = row.querySelector('.badge').textContent;
+                    const matchesSearch = text.includes(searchTerm);
+                    const matchesType = !filterType || type === filterType;
+                    row.style.display = matchesSearch && matchesType ? '' : 'none';
+                });
+            }
+
+            searchInput.addEventListener('input', filterTable);
+            typeFilter.addEventListener('change', filterTable);
+        }
+
+        function exportReport(type) {
+            window.location.href = `@Url.Action("Export")?type=${type}`;
+        }
+    </script>
+}
+
+@section Styles {
+    <style>
+        .card {
+            transition: all 0.3s ease;
+        }
+
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+            }
+
+        .progress {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .badge {
+            padding: 0.5em 0.8em;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+
+
+        }
+    </style>
+}

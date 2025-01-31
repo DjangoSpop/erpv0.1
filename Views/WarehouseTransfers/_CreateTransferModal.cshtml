@@ -1,0 +1,64 @@
+﻿@model erpv0._1.Models.ViewModels.WarhousesTransfer.WarehouseTransferCreateViewModel
+
+<div class="modal fade" id="createTransferModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-box-arrow-right me-2"></i>
+                    إنشاء طلب نقل جديد
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createTransferForm" asp-action="Create">
+                <div class="modal-body">
+                    <div class="form-floating mb-3">
+                        <select asp-for="SourceWarehouseId" class="form-select" required>
+                            <option value="">اختر المستودع</option>
+                            @foreach (var warehouse in Model.AvailableWarehouses.Where(w => w.IsActive == true))
+                            {
+                                <option value="@warehouse.WarehouseId">@warehouse.Name (@warehouse.Location)</option>
+                            }
+                        </select>
+                        <label asp-for="SourceWarehouseId">المستودع المصدر</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <select asp-for="DestWarehouseId" class="form-select" required>
+                            <option value="">اختر المستودع</option>
+                            @foreach (var warehouse in Model.AvailableWarehouses.Where(w => w.IsActive == true))
+                            {
+                                <option value="@warehouse.WarehouseId">@warehouse.Name (@warehouse.Location)</option>
+                            }
+                        </select>
+                        <label asp-for="DestWarehouseId">المستودع الهدف</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <select asp-for="ProductId" class="form-select" required>
+                            <option value="">اختر المنتج</option>
+                            @foreach (var product in Model.AvailableProducts)
+                            {
+                                <option value="@product.ProductId">@product.ProductName</option>
+                            }
+                        </select>
+                        <label asp-for="ProductId">المنتج</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Quantity" type="number" class="form-control" min="1" required />
+                        <label asp-for="Quantity">الكمية</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>إلغاء
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

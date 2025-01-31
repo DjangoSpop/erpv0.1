@@ -1,0 +1,57 @@
+﻿@model erpv0._1.Models.ErrorViewModel
+@{
+    ViewData["Title"] = Model?.ErrorTitle ?? "Error";
+}
+
+<div class="error-container">
+    <h1 class="text-danger">@(Model?.ErrorTitle ?? "An error occurred")</h1>
+    <h2 class="text-danger">@(Model?.ErrorMessage ?? "An error occurred while processing your request.")</h2>
+
+    @if (Model?.ShowRequestId == true)
+    {
+        <p>
+            <strong>Request ID:</strong> <code>@Model.RequestId</code>
+        </p>
+    }
+
+    @if (Model?.ShowStackTrace == true)
+    {
+        <div class="stack-trace">
+            <h3>Stack Trace</h3>
+            <pre>@Model.StackTrace</pre>
+        </div>
+    }
+
+    @if (Model?.ShowInnerException == true)
+    {
+        <div class="inner-exception">
+            <h3>Inner Exception</h3>
+            <pre>@Model.InnerException</pre>
+        </div>
+    }
+</div>
+
+<style>
+    .error-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .text-danger {
+        color: #dc3545;
+    }
+
+    .stack-trace, .inner-exception pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        background: #f8f9fa;
+        padding: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        margin-top: 1rem;
+    }
+</style>
