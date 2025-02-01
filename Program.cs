@@ -1,13 +1,11 @@
 using erpv0._1.Data;
-using erpv0._1.Services;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddScoped<IStockEntryService, StockEntryService>();
-builder.Services.AddScoped<IStockService, StockService>();
+
 builder.Services.AddMemoryCache();
 // Add services to the container.
 builder.Services.AddControllersWithViews();

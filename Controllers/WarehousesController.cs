@@ -175,27 +175,29 @@ namespace erpv0._1.Controllers
             }
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
+
+        public async Task<IActionResult> Delete(int? id)
         {
-            try
+            if (id == null) return NotFound();
+
+            var warehouse = await _context.Warehouses.FirstOrDefaultAsync(c => c.WarehouseId == id);
+            if (warehouse == null) return NotFound();
+
+            return View(warehouse);
+        }
+
+        
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var warehouse = await _context.Warehouses.FindAsync(id);
+            if (warehouse != null)
             {
-                var warehouse = await _context.Warehouses.FindAsync(id);
-                if (warehouse != null)
-                {
-                    _context.Warehouses.Remove(warehouse);
-                    await _context.SaveChangesAsync();
-                    TempData["Success"] = "تم حذف المستودع بنجاح";
-                }
-                return RedirectToAction(nameof(Index));
+                _context.Warehouses.Remove(warehouse);
+                await _context.SaveChangesAsync();
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error deleting warehouse");
-                TempData["Error"] = "حدث خطأ أثناء حذف المستودع";
-                return RedirectToAction(nameof(Index));
-            }
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]

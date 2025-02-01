@@ -87,8 +87,8 @@
                                       <select name="isActive" class="form-select bg-secondary border-0 text-white"
                                 onchange="this.form.submit()">
                             <option value="">كل المستودعات</option>
-                            <option value="true" selected="@(Model.IsActiveFilter == true)">النشطة فقط</option>
-                            <option value="false" selected="@(Model.IsActiveFilter == false)">غير النشطة</option>
+                            <option value="true" selected="@(Model.IsActiveFilter)">النشطة فقط</option>
+                            <option value="false" selected="@(Model.IsActiveFilter)">غير النشطة</option>
                         </select>
                      
                   
@@ -138,11 +138,12 @@
                                            class="btn btn-sm btn-warning" title="تعديل">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <button class="btn btn-sm btn-danger" title="حذف"
-                                                onclick="confirmDelete(@warehouse.WarehouseId)">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
+                                        <a href="@Url.Action("Delete",new { id = warehouse.WarehouseId })"
+                                        class="btn btn-sm btn-danger" class="btn btn-sm btn-danger" title="حذف">
+                                           <i class="bi bi-trash"></i>
+                                        </a>
                                     </div>
+                                    
                                 </td>
                             </tr>
                         }
@@ -188,30 +189,30 @@
             });
         }
 
-        function confirmDelete(id) {
-            Swal.fire({
-                title: 'تأكيد الحذف',
-                text: 'هل أنت متأكد من حذف هذا المستودع؟',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'نعم، احذف',
-                cancelButtonText: 'إلغاء',
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.post('@Url.Action("Delete")', { id: id }, function(response) {
-                        if (response.success) {
-                            toastr.success('تم حذف المستودع بنجاح');
-                            location.reload();
-                        } else {
-                            toastr.error(response.message || 'حدث خطأ أثناء الحذف');
-                        }
-                    }).fail(function() {
-                        toastr.error('حدث خطأ أثناء الاتصال بالخادم');
-                    });
-                }
-            });
-        }
+        // function confirmDelete(id) {
+        //     Swal.fire({
+        //         title: 'تأكيد الحذف',
+        //         text: 'هل أنت متأكد من حذف هذا المستودع؟',
+        //         icon: 'warning',
+        //         showCancelButton: true,
+        //         confirmButtonText: 'نعم، احذف',
+        //         cancelButtonText: 'إلغاء',
+        //         reverseButtons: true
+        //     }).then((result) => {
+        //         if (result.isConfirmed) {
+        //             $.post('@Url.Action("Delete")', { id: id }, function(response) {
+        //                 if (response.success) {
+        //                     toastr.success('تم حذف المستودع بنجاح');
+        //                     location.reload();
+        //                 } else {
+        //                     toastr.error(response.message || 'حدث خطأ أثناء الحذف');
+        //                 }
+        //             }).fail(function() {
+        //                 toastr.error('حدث خطأ أثناء الاتصال بالخادم');
+        //             });
+        //         }
+        //     });
+        // }
 
         // Initialize toastr options
         toastr.options = {

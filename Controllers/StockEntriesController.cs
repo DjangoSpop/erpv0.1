@@ -1,6 +1,5 @@
 ﻿using erpv0._1.Data;
 using erpv0._1.Models;
-using erpv0._1.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -13,13 +12,13 @@ namespace erpv0._1.Controllers
     public class StockEntriesController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly IStockEntryService _stockService;
+   
         private readonly ILogger<StockEntriesController> _logger;
         private readonly IMemoryCache _cache;
 
-        public StockEntriesController(IStockEntryService stockService, ILogger<StockEntriesController> logger, IMemoryCache cache, ApplicationDbContext context)
+        public StockEntriesController( ILogger<StockEntriesController> logger, IMemoryCache cache, ApplicationDbContext context)
         {
-            _stockService = stockService;
+            
             _context = context;
             _logger = logger;
             _cache = cache;
@@ -53,7 +52,10 @@ namespace erpv0._1.Controllers
         {
             try
             {
-                var entries = await _stockService.GetAllStockEntriesAsync();
+                var entries = await _context.StockEntries
+                    .Include(s => s.Product)
+                    .Include(s => s.Warehouse)
+                    .ToListAsync();
 
                 // Apply filtering efficiently before calling ToList()
                 if (!string.IsNullOrWhiteSpace(searchTerm))

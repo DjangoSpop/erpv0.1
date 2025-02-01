@@ -7,6 +7,13 @@
     <RootNamespace>erpv0._1</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="NewFolder1\**" />
+    <Content Remove="NewFolder1\**" />
+    <EmbeddedResource Remove="NewFolder1\**" />
+    <None Remove="NewFolder1\**" />
+  </ItemGroup>
+
 
 
 
@@ -17,6 +24,9 @@
 
 
   <ItemGroup>
+
+  
+    <PackageReference Include="AutoMapper" Version="13.0.1" />
 
   
     <PackageReference Include="EPPlus" Version="7.5.3" />
