@@ -1,5 +1,4 @@
-﻿
-@model erpv0._1.Models.ViewModels.StockMovementListViewModel
+﻿@model erpv0._1.Models.ViewModels.StockMovementListViewModel
 
 @{
     ViewData["Title"] = "حركات المخزون";
@@ -8,13 +7,18 @@
 <div class="container-fluid px-4" dir="rtl">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0">حركات المخزون</h1>
-        <div>
+        <div class="ButtonGroup">
             <button class="btn btn-outline-success me-2" onclick="exportToExcel()">
-                <i class="bi bi-file-excel"></i> تصدير Excel
+                <i class="bi bi-file-excel"></i> تصدير Excel    
             </button>
             <button class="btn btn-outline-primary" onclick="window.print()">
                 <i class="bi bi-printer"></i> طباعة
             </button>
+            <form asp-action="Create" >
+                <button class="btn btn-outline-primary  ">
+                    <i class="bi bi-add"></i> طلب نقل مخزون
+                </button>
+            </form>
         </div>
     </div>
 
@@ -85,8 +89,8 @@
                 <div class="col-md-4">
                     <select name="movementType" class="form-select" onchange="this.form.submit()">
                         <option value="">كل الحركات</option>
-                        <option value="IN" selected="@(Model.MovementType == "IN")">الوارد</option>
-                        <option value="OUT" selected="@(Model.MovementType == "OUT")">الصادر</option>
+                        <option value="IN" selected="@(Model.MovementType == "IN" ? "selected" : null)">الوارد</option>
+                        <option value="OUT" selected="@(Model.MovementType == "OUT" ? "selected" : null)">الصادر</option>
                     </select>
                 </div>
             </div>
@@ -110,15 +114,6 @@
                     @foreach (var movement in Model.Movements)
                     {
                         <tr>
-                            public IActionResult Index()
-                            {
-                                var model = new StockMovementsViewModel
-                                {
-                                    Movements = new List<Movement>() // Ensure Movements is initialized
-                                };
-                                // Populate the Movements list with data
-                                return View(model);
-                            }
                             <td>@movement.ProductName</td>
                             <td>
                                 @if (movement.MovementType == "IN")
@@ -136,10 +131,18 @@
                             <td>@movement.WarehouseName</td>
                             <td>@movement.CreatedBy</td>
                             <td>
-                                <a href="@Url.Action("Details", new { id = movement.MovementId })"
-                                   class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="تفاصيل">
+                                @* <form asp-action="Create"> *@
+                                @*     <button class="btn btn-outline-primary  "> *@
+                                @*         <i class="bi bi-add"></i> طلب نقل مخزون *@
+                                @*     </button> *@
+                                @* </form> *@
+                                <form asp-action="Details" >
+                             <button class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="تفاصيل">
+
                                     <i class="bi bi-info-circle"></i>
-                                </a>
+                                    </button>
+
+                                </form>
                             </td>
                         </tr>
                     }
@@ -163,7 +166,37 @@
         </div>
     </div>
 </div>
+@section Styles {
+    <style>
+        .hover-effect {
+            transition: transform 0.2s;
+        }
 
+            .hover-effect:hover {
+                transform: translateY(-5px);
+            }
+
+        .card {
+            border-radius: 0.5rem;
+        }
+
+        .btn-group .btn {
+            border-radius: 0.25rem;
+            margin: 0 5px;
+        }
+
+        .form-check-input:checked {
+            background-color: #4e73df;
+            border-color: #4e73df;
+        }
+
+        .ButtonGroup {
+            margin:0 5px;
+            accent-color: #4e73df;
+
+        }
+    </style>
+}
 @section Scripts {
     <script>
         $(document).ready(function() {

@@ -1,5 +1,4 @@
 ﻿
-using ArabicWarehouseERP.Models.ViewModels.ArabicWarehouseERP.Models.ViewModels;
 using System.ComponentModel.DataAnnotations;
 
 namespace erpv0._1.Models.ViewModels.ProductViewModel

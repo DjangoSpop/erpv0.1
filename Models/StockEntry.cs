@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace erpv0._1.Models;
 
@@ -12,9 +13,8 @@ public partial class StockEntry
     public int WarehouseId { get; set; }
 
     public string BatchNumber { get; set; } = null!;
-
-    public int Quantity { get; set; }
-
+    [ConcurrencyCheck]
+    public int Quantity { get; set; } 
     public decimal CostPrice { get; set; }
 
     public decimal SellingPrice { get; set; }

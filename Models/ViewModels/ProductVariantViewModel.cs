@@ -31,7 +31,7 @@ namespace erpv0._1.Models.ViewModels
         public decimal PriceAdjustment { get; set; }
 
         [Display(Name = "نشط")]
-        public bool? IsActive { get; set; }
+        public bool IsActive { get; set; } 
 
         // Audit Trail Properties
         public DateTime CreatedAt { get; set; }

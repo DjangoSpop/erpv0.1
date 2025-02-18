@@ -33,6 +33,8 @@ namespace erpv0._1.Models.ViewModels
         public bool? IsActiveFilter { get; set; }
         public PaginationInfo Pagination { get; set; } = new();
         public WarehouseStatistics Statistics { get; set; } = new();
+
+   
     }
 
     public class PaginationInfo

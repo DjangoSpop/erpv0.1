@@ -1,17 +1,35 @@
 ﻿@model IEnumerable<erpv0._1.Models.StockEntry>
 
 <div class="container-fluid px-4" dir="rtl">
+    @* <form asp-action="Delete" asp-controller="StockEntries" method="post" onsubmit="return confirm('هل أنت متأكد من الحذف؟');"> *@
+    @*     <input type="hidden" name="id" value="@entry.EntryId" /> *@
+    @*     <button type="submit" class="btn btn-outline-danger btn-sm"> *@
+    @*         <i class="bi bi-trash"></i> حذف *@
+    @*     </button> *@
+    @* </form> *@
     <!-- Header Section -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 text-white mb-0">إدارة المخزون</h1>
         <div class="btn-toolbar gap-2">
             <div class="btn-group">
-                <button class="btn btn-success" onclick="importExcel()">
-                    <i class="bi bi-file-earmark-excel me-2"></i>استيراد
-                </button>
+
+                <form asp-action="ImportExcel" asp-controller="StockEntries" method="post" enctype="multipart/form-data">
+                    <!-- Hidden file input -->
+                    <input type="file" id="excelFile" name="file" accept=".xlsx,.xls" class="d-none" onchange="this.form.submit()">
+
+                    <!-- Button to trigger file selection -->
+                    <button type="button" class="btn btn-success" onclick="document.getElementById('excelFile').click();">
+                        <i class="bi bi-file-earmark-excel me-2"></i> استيراد
+                    </button>
+                </form>
+
+
+                <form asp-action="ExportExcel" asp-controller="StockEntries">  
                 <button class="btn btn-primary" onclick="exportExcel()">
                     <i class="bi bi-download me-2"></i>تصدير
                 </button>
+                </form>
+
             </div>
             <a href="@Url.Action("Create")" class="btn btn-primary">
                 <i class="bi bi-plus-lg me-2"></i>إضافة جديد
@@ -104,7 +122,7 @@
                 </div>
                 <div class="col-md-4">
                     <div class="input-group">
-                        <input type="text" id="searchFilter" class="form-control bg-secondary border-0 text-white" 
+                        <input type="text" id="searchFilter" class="form-control bg-secondary border-0 text-white"
                                placeholder="بحث...">
                         <button class="btn btn-primary" type="button" onclick="applyFilters()">
                             <i class="bi bi-search"></i>
@@ -130,7 +148,7 @@
                 <div class="card bg-dark h-100 border-0 shadow-sm hover-effect">
                     <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
                         <div class="form-check">
-                            <input type="checkbox" class="form-check-input entry-checkbox" 
+                            <input type="checkbox" class="form-check-input entry-checkbox"
                                    data-entry-id="@entry.EntryId">
                         </div>
                         <span class="badge bg-secondary">@entry.BatchNumber</span>
@@ -139,14 +157,14 @@
                         <div class="d-flex justify-content-between mb-3">
                             <h5 class="card-title text-white mb-0">@entry.Product.ProductName</h5>
                             @{
-                                var statusClass = entry.Quantity <= 0 ? "danger" : 
-                                                entry.Quantity <= 10 ? "warning" : "success";
-                                var statusText = entry.Quantity <= 0 ? "نفاذ المخزون" : 
-                                               entry.Quantity <= 10 ? "مخزون منخفض" : "متوفر";
+                                var statusClass = entry.Quantity <= 0 ? "danger" :
+                                entry.Quantity <= 10 ? "warning" : "success";
+                                var statusText = entry.Quantity <= 0 ? "نفاذ المخزون" :
+                                entry.Quantity <= 10 ? "مخزون منخفض" : "متوفر";
                             }
                             <span class="badge bg-@statusClass">@statusText</span>
                         </div>
-                        
+
                         <div class="row g-2 mb-3">
                             <div class="col-6">
                                 <div class="bg-secondary bg-opacity-10 rounded p-2">
@@ -171,18 +189,20 @@
                     </div>
                     <div class="card-footer bg-transparent border-0">
                         <div class="btn-group w-100">
-                            <a href="@Url.Action("Edit", new { id = entry.EntryId })" 
+                            <a href="@Url.Action("Edit", new { id = entry.EntryId })"
                                class="btn btn-outline-warning btn-sm">
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            <a href="@Url.Action("Details", new { id = entry.EntryId })" 
+                            <a href="@Url.Action("Details", new { id = entry.EntryId })"
                                class="btn btn-outline-info btn-sm">
                                 <i class="bi bi-eye"></i>
                             </a>
-                            <button type="button" class="btn btn-outline-danger btn-sm"
-                                    onclick="confirmDelete(@entry.EntryId)">
-                                <i class="bi bi-trash"></i>
-                            </button>
+                            <form asp-action="Delete" asp-controller="StockEntries" method="post" onsubmit="return confirm('هل أنت متأكد من الحذف؟');">
+                                <input type="hidden" name="id" value="@entry.EntryId" />
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-trash"></i> حذف
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -190,7 +210,6 @@
         }
     </div>
 </div>
-
 <!-- Import Excel Modal -->
 <div class="modal fade" id="importModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -200,22 +219,21 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="importForm" enctype="multipart/form-data">
+                <form asp-action="ImportExcel" asp-controller="StockEntries" method="post" enctype="multipart/form-data">
                     <div class="mb-3">
-                        <label for="excelFile" class="form-label">اختر ملف Excel</label>
-                        <input type="file" class="form-control bg-secondary border-0" 
-                               id="excelFile" accept=".xlsx,.xls">
+                        <label for="file" class="form-label">اختر ملف Excel</label>
+                        <input type="file" class="form-control bg-secondary border-0" name="file" accept=".xlsx,.xls" required>
                     </div>
                     <div class="text-center">
                         <a href="/templates/stock-entry-template.xlsx" class="text-info">
                             <i class="bi bi-download me-2"></i>تحميل القالب
                         </a>
                     </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-primary">استيراد</button>
+                    </div>
                 </form>
-            </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                <button type="button" class="btn btn-primary" onclick="processImport()">استيراد</button>
             </div>
         </div>
     </div>
@@ -226,16 +244,20 @@
         .hover-effect {
             transition: transform 0.2s;
         }
-        .hover-effect:hover {
-            transform: translateY(-5px);
-        }
+
+            .hover-effect:hover {
+                transform: translateY(-5px);
+            }
+
         .card {
             border-radius: 0.5rem;
         }
+
         .btn-group .btn {
             border-radius: 0.25rem;
-            margin: 0 2px;
+            margin: 0 5px;
         }
+
         .form-check-input:checked {
             background-color: #4e73df;
             border-color: #4e73df;
@@ -253,171 +275,12 @@
         document.querySelectorAll('.entry-checkbox').forEach(checkbox => {
             checkbox.addEventListener('change', updateBulkActions);
         });
-
-        function updateBulkActions() {
-            const checkedBoxes = document.querySelectorAll('.entry-checkbox:checked');
-            const bulkActions = document.getElementById('bulkActions');
-            
-            if (checkedBoxes.length > 0) {
-                bulkActions.classList.remove('d-none');
-            } else {
                 bulkActions.classList.add('d-none');
             }
-        }
+        
 
-        // Import/Export functions
-        function importExcel() {
-            $('#importModal').modal('show');
-        }
-
-        function processImport() {
-            const fileInput = document.getElementById('excelFile');
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-
-            fetch('/StockEntries/ImportExcel', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'تم الاستيراد بنجاح',
-                        text: data.message
-                    }).then(() => {
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'خطأ',
-                        text: data.message
-                    });
-                }
-            })
-            .catch(error => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'خطأ',
-                    text: 'حدث خطأ أثناء الاستيراد'
-                });
-            })
-            .finally(() => {
-                $('#importModal').modal('hide');
-            });
-        }
-
-        function exportExcel() {
-            window.location.href = '/StockEntries/ExportExcel';
-        }
-
-        // Delete functions
-        function confirmDelete(id) {
-            Swal.fire({
-                title: 'تأكيد الحذف',
-                text: 'هل أنت متأكد من حذف هذا السجل؟',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'نعم، احذف',
-                cancelButtonText: 'إلغاء'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    deleteEntry(id);
-                }
-            });
-        }
-
-        function deleteEntry(id) {
-            fetch(`/StockEntries/Delete/${id}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                       title: 'خطأ',
-                        text: data.message || 'حدث خطأ أثناء الحذف'
-                    });
-                }
-            });
-        }
-
-        function deleteBulk() {
-            const selectedIds = Array.from(document.querySelectorAll('.entry-checkbox:checked'))
-                .map(checkbox => checkbox.dataset.entryId);
-
-            if (selectedIds.length === 0) return;
-
-            Swal.fire({
-                title: 'تأكيد الحذف',
-                text: `هل أنت متأكد من حذف ${selectedIds.length} سجل؟`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'نعم، احذف',
-                cancelButtonText: 'إلغاء'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    fetch('/StockEntries/DeleteBulk', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ ids: selectedIds })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'خطأ',
-                                text: data.message || 'حدث خطأ أثناء الحذف'
-                            });
-                        }
-                    });
-                }
-            });
-        }
-
-        // Filter functions
-        function applyFilters() {
-            const warehouse = document.getElementById('warehouseFilter').value;
-            const date = document.getElementById('dateFilter').value;
-            const search = document.getElementById('searchFilter').value;
-
-            const params = new URLSearchParams();
-            if (warehouse) params.append('warehouseId', warehouse);
-            if (date) params.append('date', date);
-            if (search) params.append('searchTerm', search);
-
-            window.location.href = `${window.location.pathname}?${params.toString()}`;
-        }
-
-        // Quick filter handlers
-        document.getElementById('warehouseFilter').addEventListener('change', applyFilters);
-        document.getElementById('dateFilter').addEventListener('change', applyFilters);
-
-        let searchTimeout;
-        document.getElementById('searchFilter').addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(applyFilters, 500);
-        });
-
+     
         // Initialize any Select2 dropdowns
-        $(document).ready(function() {
-            $('.form-select').select2({
-                theme: 'bootstrap-5',
-                dir: 'rtl'
-            });
-        });
+
     </script>
 }

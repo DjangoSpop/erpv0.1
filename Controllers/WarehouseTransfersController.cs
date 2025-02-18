@@ -138,8 +138,116 @@ namespace erpv0._1.Controllers
 
             return Json(new { success = true, message = "تم تحديث حالة طلب النقل بنجاح." });
         }
+        public async Task<IActionResult> Create()
+        {
+            try
+            {
+                await PrepareCreateViewData();
+                return View(new WarehouseTransfer());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error preparing create view");
+                TempData["Error"] = "حدث خطأ أثناء تحميل البيانات";
+                return RedirectToAction(nameof(Index));
+            }
+        }
 
-        //[HttpPost,ActionName("Create")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(WarehouseTransfer model)
+        {
+            if (!ModelState.IsValid)
+            {
+                await PrepareCreateViewData();
+                return View(model);
+            }
+
+            try
+            {
+                if (model.SourceWarehouseId == model.DestWarehouseId)
+                {
+                    ModelState.AddModelError("", "لا يمكن أن يكون المستودع المصدر والوجهة نفس المستودع");
+                    await PrepareCreateViewData();
+                    return View(model);
+                }
+
+                // Validate stock availability in source warehouse
+                var sourceStock = await _context.StockEntries
+                    .Where(s => s.WarehouseId == model.SourceWarehouseId && s.ProductId == model.ProductId)
+                    .SumAsync(s => s.Quantity);
+
+                if (model.Quantity > sourceStock)
+                {
+                    ModelState.AddModelError("", "الكمية المطلوبة غير متوفرة في المستودع المصدر");
+                    await PrepareCreateViewData();
+                    return View(model);
+                }
+
+                var transfer = new WarehouseTransfer
+                {
+                    SourceWarehouseId = model.SourceWarehouseId,
+                    DestWarehouseId = model.DestWarehouseId,
+                    ProductId = model.ProductId,
+                    Quantity = model.Quantity,
+                    Status = "Pending",
+                    RequestedDate = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = User?.Identity?.Name ?? "System",
+                    UpdatedAt = DateTime.UtcNow,
+                    UpdatedBy = User?.Identity?.Name ?? "System"
+                };
+
+                _context.Add(transfer);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "تم إنشاء طلب النقل بنجاح";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating warehouse transfer");
+                ModelState.AddModelError("", "حدث خطأ أثناء إنشاء طلب النقل");
+                await PrepareCreateViewData();
+                return View(model);
+            }
+        }
+
+
+
+        private async Task PrepareCreateViewData()
+        {
+            try
+            {
+                ViewBag.Warehouses = await _context.Warehouses
+                    .OrderBy(w => w.Name)
+                    .Select(w => new SelectListItem
+                    {
+                        Value = w.WarehouseId.ToString(),
+                        Text = w.Name
+                    })
+                    .ToListAsync();
+
+                ViewBag.Products = await _context.Products
+                    .OrderBy(p => p.ProductName)
+                    .Select(p => new SelectListItem
+                    {
+                        Value = p.ProductId.ToString(),
+                        Text = p.ProductName
+                    })
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading dropdown data for warehouses and products.");
+                ViewBag.Warehouses = new List<SelectListItem>();
+                ViewBag.Products = new List<SelectListItem>();
+                TempData["Error"] = "حدث خطأ أثناء تحميل بيانات المخازن والمنتجات.";
+            }
+        }
+    }
+}
+
+        //[HttpPost, ActionName("Create")]
         //public async Task<IActionResult> Create(WarehouseTransferCreateViewModel model)
         //{
         //    if (!ModelState.IsValid)
@@ -171,122 +279,43 @@ namespace erpv0._1.Controllers
         //        return Json(new { success = false, message = "حدث خطأ أثناء إنشاء الطلب" });
         //    }
         //}
-        public async Task<IActionResult> Create()
-        {
-            try
-            {
-                await PrepareCreateViewData();
-                return View();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error preparing create view");
-                TempData["Error"] = "حدث خطأ أثناء تحميل البيانات";
-                return RedirectToAction(nameof(Index));
-            }
-        }
-
-        // POST: WarehouseTransfers/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(WarehouseTransfer model)
-        {
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    var transfer = new WarehouseTransfer
-                    {
-                        SourceWarehouseId = model.SourceWarehouseId,
-                        DestWarehouseId = model.DestWarehouseId,
-                        ProductId = model.ProductId,
-                        Quantity = model.Quantity,
-                        Status = "Pending",
-                        RequestedDate = DateTime.Now,
-                        CreatedAt = DateTime.Now,
-                        CreatedBy = User?.Identity?.Name ?? "System",
-                        UpdatedBy = User?.Identity?.Name ?? "System"
-                    };
-
-                    // Validate source and destination warehouses are different
-                    if (transfer.SourceWarehouseId == transfer.DestWarehouseId)
-                    {
-                        ModelState.AddModelError("", "لا يمكن أن يكون المستودع المصدر والوجهة نفس المستودع");
-                        await PrepareCreateViewData();
-                        return View(model);
-                    }
-
-                    _context.Add(transfer);
-                    await _context.SaveChangesAsync();
-                    TempData["Success"] = "تم إنشاء طلب النقل بنجاح";
-                    return RedirectToAction(nameof(Index));
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error creating warehouse transfer");
-                    ModelState.AddModelError("", "حدث خطأ أثناء إنشاء طلب النقل");
-                }
-            }
-
-            await PrepareCreateViewData();
-            return View(model);
-        }
-
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> UpdateStatus(int id, string status)
+        //public async Task<IActionResult> Create()
         //{
         //    try
         //    {
-        //        var transfer = await _context.WarehouseTransfers.FindAsync(id);
-        //        if (transfer == null)
-        //        {
-        //            return NotFound();
-        //        }
-
-        //        transfer.Status = status;
-        //        transfer.UpdatedAt = DateTime.Now;
-        //        transfer.UpdatedBy = User?.Identity?.Name ?? "System";
-
-        //        if (status == "Completed")
-        //        {
-        //            transfer.CompletedDate = DateTime.Now;
-
-        //        }
-
-        //        _context.Update(transfer);
-        //        await _context.SaveChangesAsync();
-
-        //        return Json(new { success = true, message = "تم تحديث الحالة بنجاح" });
+        //        await PrepareCreateViewData();
+        //        return View();
         //    }
         //    catch (Exception ex)
         //    {
-        //        _logger.LogError(ex, "Error updating transfer status");
-        //        return Json(new { success = false, message = "حدث خطأ أثناء تحديث الحالة" });
+        //        _logger.LogError(ex, "Error preparing create view");
+        //        TempData["Error"] = "حدث خطأ أثناء تحميل البيانات";
+        //        return RedirectToAction(nameof(Index));
         //    }
         //}
 
-        private async Task PrepareCreateViewData()
-        {
-            ViewData["Warehouses"] = await _context.Warehouses
-                .Where(w => w.IsActive == true)
-                .OrderBy(w => w.Name)
-                .Select(w => new SelectListItem
-                {
-                    Value = w.WarehouseId.ToString(),
-                    Text = $"{w.Name} ({w.Location})"
-                })
-                .ToListAsync();
+        //// POST: WarehouseTransfers/Create
+     
+        //private async Task PrepareCreateViewData()
+        //{
+        //    ViewData["Warehouses"] = await _context.Warehouses
+        //        .Where(w => w.IsActive == true)
+        //        .OrderBy(w => w.Name)
+        //        .Select(w => new SelectListItem
+        //        {
+        //            Value = w.WarehouseId.ToString(),
+        //            Text = $"{w.Name} ({w.Location})"
+        //        })
+        //        .ToListAsync();
 
-            ViewData["Products"] = await _context.Products
-                .OrderBy(p => p.ProductName)
-                .Select(p => new SelectListItem
-                {
-                    Value = p.ProductId.ToString(),
-                    Text = p.ProductName
-                })
-                .ToListAsync();
-        }
-    }
+//    ViewData["Products"] = await _context.Products
+//        .OrderBy(p => p.ProductName)
+//        .Select(p => new SelectListItem
+//        {
+//            Value = p.ProductId.ToString(),
+//            Text = p.ProductName
+//        })
+//        .ToListAsync();
+//}
 
-}
+

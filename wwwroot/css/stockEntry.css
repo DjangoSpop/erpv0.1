@@ -1,0 +1,59 @@
+﻿.form-floating > .form-control,
+.form-floating > .form-select {
+    background-color: #2c2c44 !important;
+    color: #fff !important;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+    .form-floating > .form-control:focus,
+    .form-floating > .form-select:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+    }
+
+.form-floating > label {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Styles for select2 if used */
+.select2-container--bootstrap-5 .select2-selection {
+    background-color: #2c2c44 !important;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.select2-container--bootstrap-5 .select2-selection__rendered {
+    color: #fff !important;
+}
+
+.select2-container--bootstrap-5 .select2-dropdown {
+    background-color: #2c2c44;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.select2-container--bootstrap-5 .select2-results__option {
+    color: #fff;
+}
+
+.select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: #4e73df !important;
+}
+
+.card {
+    border: none;
+}
+
+.card-title {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.was-validated .form-control:valid,
+.was-validated .form-select:valid {
+    border-color: #198754;
+    background-color: #2c2c44 !important;
+}
+
+.was-validated .form-control:invalid,
+.was-validated .form-select:invalid {
+    border-color: #dc3545;
+    background-color: #2c2c44 !important;
+}

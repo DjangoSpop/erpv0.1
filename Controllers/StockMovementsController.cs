@@ -27,7 +27,7 @@ namespace erpv0._1.Controllers
                 var query = _context.StockMovements
                     .Include(s => s.Product)
                     .Include(s => s.StockEntry)
-                    .Include(s => s.StockEntry.Warehouse)
+                    .ThenInclude(se => se.Warehouse)
                     .AsQueryable();
 
                 if (!string.IsNullOrEmpty(searchTerm))
@@ -65,7 +65,7 @@ namespace erpv0._1.Controllers
                         Reference = m.Reference,
                         WarehouseName = m.StockEntry.Warehouse.Name,
                         CreatedBy = m.CreatedBy
-                    }),
+                    }).ToList(),
                     TotalMovements = totalItems,
                     SearchTerm = searchTerm,
                     CurrentPage = page,
@@ -83,7 +83,6 @@ namespace erpv0._1.Controllers
                 return View(new StockMovementListViewModel());
             }
         }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(StockMovement movement)
@@ -99,7 +98,15 @@ namespace erpv0._1.Controllers
                 var stockEntry = await _context.StockEntries.FindAsync(movement.StockEntryId);
                 if (stockEntry == null)
                 {
-                    ModelState.AddModelError("", "المخزون غير موجود");
+                    ModelState.AddModelError("StockEntryId", "المخزون غير موجود");
+                    await LoadViewBags();
+                    return View(movement);
+                }
+
+                // Validate stock availability for OUT movements
+                if (movement.MovementType == "OUT" && movement.Quantity > stockEntry.Quantity)
+                {
+                    ModelState.AddModelError("Quantity", "الكمية المراد سحبها تتجاوز المخزون المتاح");
                     await LoadViewBags();
                     return View(movement);
                 }
@@ -108,7 +115,7 @@ namespace erpv0._1.Controllers
                 try
                 {
                     stockEntry.Quantity += movement.MovementType == "IN" ? movement.Quantity : -movement.Quantity;
-                    movement.CreatedAt = DateTime.Now;
+                    movement.CreatedAt = DateTime.UtcNow;
                     movement.CreatedBy = User.Identity?.Name ?? "System";
 
                     _context.StockMovements.Add(movement);
@@ -132,6 +139,23 @@ namespace erpv0._1.Controllers
                 return View(movement);
             }
         }
+
+        private async Task LoadViewBags()
+        {
+            ViewBag.Products = await _context.Products
+                .Select(p => new SelectListItem { Value = p.ProductId.ToString(), Text = p.ProductName })
+                .ToListAsync();
+
+            ViewBag.StockEntries = await _context.StockEntries
+                .Include(s => s.Warehouse)
+                .Select(s => new SelectListItem
+                {
+                    Value = s.EntryId.ToString(),
+                    Text = $"{s.Warehouse.Name} - {s.BatchNumber}"
+                })
+                .ToListAsync();
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetEntryStock(int id)
         {
@@ -144,21 +168,21 @@ namespace erpv0._1.Controllers
             var currentStock = entry.Quantity;
             return Json(new { currentStock });
         }
-        private async Task LoadViewBags()
-        {
-            ViewBag.Products = await _context.Products
-                .Select(p => new SelectListItem { Value = p.ProductId.ToString(), Text = p.ProductName })
-                .ToListAsync();
+        //private async Task LoadViewBags()
+        //{
+        //    ViewBag.Products = await _context.Products
+        //        .Select(p => new SelectListItem { Value = p.ProductId.ToString(), Text = p.ProductName })
+        //        .ToListAsync();
 
-            ViewBag.StockEntries = await _context.StockEntries
-                .Include(s => s.Warehouse)
-                .Select(s => new SelectListItem
-                {
-                    Value = s.EntryId.ToString(),
-                    Text = $"{s.Warehouse} - {s.BatchNumber}"
-                })
-                .ToListAsync();
-        }
+        //    ViewBag.StockEntries = await _context.StockEntries
+        //        .Include(s => s.Warehouse)
+        //        .Select(s => new SelectListItem
+        //        {
+        //            Value = s.EntryId.ToString(),
+        //            Text = $"{s.Warehouse} - {s.BatchNumber}"
+        //        })
+        //        .ToListAsync();
+        //}
 
         //[HttpGet]
         //public async Task<IActionResult> Edit(int? id)
@@ -176,60 +200,117 @@ namespace erpv0._1.Controllers
         //    await LoadViewBags();
         //    return View(movement);
         //}
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, StockMovement movement)
         {
-            if (id != movement.MovementId) return NotFound();
-
-            if (ModelState.IsValid)
+            if (id != movement.MovementId)
             {
+                return NotFound();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                await LoadViewBags();
+                return View(movement);
+            }
+
+            try
+            {
+                using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
-                    using var transaction = await _context.Database.BeginTransactionAsync();
-                    try
-                    {
-                        // Update original quantity back
-                        var originalMovement = await _context.StockMovements.FindAsync(id);
-                        var stockEntry = await _context.StockEntries.FindAsync(movement.StockEntryId);
+                    var originalMovement = await _context.StockMovements
+                        .Include(m => m.StockEntry)
+                        .FirstOrDefaultAsync(m => m.MovementId == id);
 
-                        // Reverse original movement
-                        stockEntry.Quantity -= originalMovement.MovementType == "IN" ?
-                            originalMovement.Quantity : -originalMovement.Quantity;
-
-                        // Apply new movement
-                        stockEntry.Quantity += movement.MovementType == "IN" ?
-                            movement.Quantity : -movement.Quantity;
-
-                        movement.UpdatedAt = DateTime.Now;
-                        movement.UpdatedBy = User.Identity?.Name ?? "System";
-
-                        _context.Update(movement);
-                        await _context.SaveChangesAsync();
-                        await transaction.CommitAsync();
-
-                        TempData["Success"] = "تم تحديث حركة المخزون بنجاح";
-                        return RedirectToAction(nameof(Index));
-                    }
-                    catch
-                    {
-                        await transaction.RollbackAsync();
-                        throw;
-                    }
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!await MovementExists(movement.MovementId))
+                    if (originalMovement == null)
                     {
                         return NotFound();
                     }
-                    throw;
+
+                    var originalStockEntry = originalMovement.StockEntry;
+
+                    // Reverse original movement effect
+                    if (originalMovement.MovementType == "IN")
+                    {
+                        originalStockEntry.Quantity -= originalMovement.Quantity;
+                    }
+                    else
+                    {
+                        originalStockEntry.Quantity += originalMovement.Quantity;
+                    }
+
+                    // Determine new StockEntry
+                    StockEntry newStockEntry;
+                    if (movement.StockEntryId != originalMovement.StockEntryId)
+                    {
+                        newStockEntry = await _context.StockEntries.FindAsync(movement.StockEntryId);
+                        if (newStockEntry == null)
+                        {
+                            ModelState.AddModelError("StockEntryId", "المخزون المحدد غير موجود");
+                            await LoadViewBags();
+                            return View(movement);
+                        }
+                    }
+                    else
+                    {
+                        newStockEntry = originalStockEntry;
+                    }
+
+                    // Apply new movement effect
+                    if (movement.MovementType == "IN")
+                    {
+                        newStockEntry.Quantity += movement.Quantity;
+                    }
+                    else
+                    {
+                        if (movement.Quantity > newStockEntry.Quantity)
+                        {
+                            ModelState.AddModelError("Quantity", "الكمية المراد سحبها تتجاوز المخزون المتاح");
+                            await LoadViewBags();
+                            return View(movement);
+                        }
+                        newStockEntry.Quantity -= movement.Quantity;
+                    }
+
+                    // Update original movement properties
+                    originalMovement.ProductId = movement.ProductId;
+                    originalMovement.StockEntryId = movement.StockEntryId;
+                    originalMovement.MovementType = movement.MovementType;
+                    originalMovement.Quantity = movement.Quantity;
+                    originalMovement.MovementDate = movement.MovementDate;
+                    originalMovement.Reference = movement.Reference;
+                    originalMovement.UpdatedAt = DateTime.UtcNow;
+                    originalMovement.UpdatedBy = User.Identity?.Name ?? "System";
+
+                    _context.Update(originalMovement);
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    TempData["Success"] = "تم تحديث حركة المخزون بنجاح";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Error updating stock movement");
+                    ModelState.AddModelError("", "حدث خطأ أثناء تحديث حركة المخزون");
+                    await LoadViewBags();
+                    return View(movement);
                 }
             }
-
-            await LoadViewBags();
-            return View(movement);
+            catch (DbUpdateConcurrencyException ex)
+            {
+                if (!await MovementExists(movement.MovementId))
+                {
+                    return NotFound();
+                }
+                _logger.LogError(ex, "Concurrency error updating stock movement");
+                ModelState.AddModelError("", "تم تعديل هذه الحركة بواسطة مستخدم آخر. يرجى تحديث الصفحة والمحاولة مرة أخرى.");
+                await LoadViewBags();
+                return View(movement);
+            }
         }
 
         [HttpPost]
@@ -264,6 +345,7 @@ namespace erpv0._1.Controllers
                 TempData["Error"] = "حدث خطأ أثناء حذف حركة المخزون";
                 return RedirectToAction(nameof(Index));
             }
+
         }
 
         public async Task<IActionResult> Details(int? id)
@@ -285,4 +367,4 @@ namespace erpv0._1.Controllers
             return await _context.StockMovements.AnyAsync(e => e.MovementId == id);
         }
     }
-}
+    }

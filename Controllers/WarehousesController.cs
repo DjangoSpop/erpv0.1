@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using erpv0._1.Data;
 using erpv0._1.Models;
 using erpv0._1.Models.ViewModels;
+using Microsoft.IdentityModel.Tokens;
 
 namespace erpv0._1.Controllers
 {
@@ -19,7 +20,7 @@ namespace erpv0._1.Controllers
             _logger = logger;
         }
 
-        public async Task<IActionResult> Index(string? searchTerm, bool? isActive, int page = 1)
+        public async Task<IActionResult> Index(string? searchTerm, String? isActive, int page = 1)
         {
             try
             {
@@ -35,12 +36,15 @@ namespace erpv0._1.Controllers
                         w.Name.Contains(searchTerm) ||
                         w.Location.Contains(searchTerm));
                 }
-
-                if (isActive.HasValue)
+                bool? isActiveFilter = null;
+                if (!string.IsNullOrEmpty(isActive))
                 {
-                    query = query.Where(w => w.IsActive == isActive);
+                    if (bool.TryParse(isActive, out bool parsedValue))
+                    {
+                        isActiveFilter = parsedValue;
+                        query = query.Where(w => w.IsActive == parsedValue);
+                    }
                 }
-
                 // Calculate statistics
                 var statistics = new WarehouseStatistics
                 {
@@ -67,9 +71,9 @@ namespace erpv0._1.Controllers
                 {
                     Warehouses = warehouses,
                     SearchTerm = searchTerm,
-                    IsActiveFilter = isActive,
+                    IsActiveFilter = isActiveFilter,
                     Statistics = statistics,
-                    Pagination = new PaginationInfo
+                    Pagination = new PaginationInfo 
                     {
                         CurrentPage = page,
                         ItemsPerPage = pageSize,

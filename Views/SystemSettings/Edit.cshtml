@@ -1,0 +1,92 @@
+﻿@model erpv0._1.Models.SystemSettings
+
+@{
+    ViewData["Title"] = "تعديل إعدادات النظام";
+}
+
+<link rel="stylesheet" href="~/css/settings.css" />
+
+<div class="card settings-card">
+    <div class="card-header bg-primary text-white">
+        <h4>@ViewData["Title"]</h4>
+    </div>
+    <div class="card-body">
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="SettingId" />
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="SystemName" class="control-label"></label>
+                        <input asp-for="SystemName" class="form-control" />
+                        <span asp-validation-for="SystemName" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="LogoPath" class="control-label"></label>
+                        <input asp-for="LogoPath" class="form-control" />
+                        <span asp-validation-for="LogoPath" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="DefaultLanguage" class="control-label"></label>
+                        <select asp-for="DefaultLanguage" class="form-control">
+                            <option value="ar">العربية</option>
+                            <option value="en">English</option>
+                        </select>
+                        <span asp-validation-for="DefaultLanguage" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="TimeZone" class="control-label"></label>
+                        <input asp-for="TimeZone" class="form-control" />
+                        <span asp-validation-for="TimeZone" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="DateFormat" class="control-label"></label>
+                        <input asp-for="DateFormat" class="form-control" />
+                        <span asp-validation-for="DateFormat" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="LowStockThreshold" class="control-label"></label>
+                        <input asp-for="LowStockThreshold" class="form-control" />
+                        <span asp-validation-for="LowStockThreshold" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Currency" class="control-label"></label>
+                        <input asp-for="Currency" class="form-control" />
+                        <span asp-validation-for="Currency" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="DefaultTaxRate" class="control-label"></label>
+                        <input asp-for="DefaultTaxRate" class="form-control" />
+                        <span asp-validation-for="DefaultTaxRate" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="SystemEmail" class="control-label"></label>
+                <input asp-for="SystemEmail" class="form-control" />
+                <span asp-validation-for="SystemEmail" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="CompanyAddress" class="control-label"></label>
+                <textarea asp-for="CompanyAddress" class="form-control"></textarea>
+                <span asp-validation-for="CompanyAddress" class="text-danger"></span>
+            </div>
+
+            <div class="form-group text-center">
+                <input type="submit" value="حفظ التغييرات" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">إلغاء</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

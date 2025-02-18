@@ -1,0 +1,99 @@
+﻿@model erpv0._1.Models.SystemSettings
+
+@{
+    ViewData["Title"] = "إعدادات النظام";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="~/css/settings.css" />
+<div class="container mt-4">
+    <div class="card settings-card shadow-lg">
+        <div class="card-header bg-primary text-white text-center">
+            <h4><i class="fas fa-cogs"></i> @ViewData["Title"]</h4>
+        </div>
+        <div class="card-body">
+            @if (Model != null)
+            {
+                <dl class="row row-cols-2 description-list">
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.SystemName)</dt>
+                    <dd class="col-sm-8">@Model.SystemName ?? "<span class='text-muted'>غير متوفر</span>"</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.LogoPath)</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrEmpty(Model.LogoPath))
+                        {
+                            <img src="@Model.LogoPath" alt="شعار النظام" class="logo-preview img-thumbnail" />
+                        }
+                        else
+                        {
+                            <span class="text-muted">لا يوجد شعار</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.DefaultLanguage)</dt>
+                    <dd class="col-sm-8">@Model.DefaultLanguage ?? "<span class='text-muted'>غير متوفر</span>"</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.TimeZone)</dt>
+                    <dd class="col-sm-8">@Model.TimeZone ?? "<span class='text-muted'>غير متوفر</span>"</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.DateFormat)</dt>
+                    <dd class="col-sm-8">@Model.DateFormat ?? "<span class='text-muted'>غير متوفر</span>"</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Currency)</dt>
+                    <dd class="col-sm-8">@Model.Currency ?? "<span class='text-muted'>غير متوفر</span>"</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.SystemEmail)</dt>
+                    <dd class="col-sm-8">@Model.SystemEmail ?? "<span class='text-muted'>غير متوفر</span>"</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.PhoneNumber)</dt>
+                    <dd class="col-sm-8">@Model.PhoneNumber ?? "<span class='text-muted'>غير متوفر</span>"</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.CompanyAddress)</dt>
+                    <dd class="col-sm-8">@Model.CompanyAddress ?? "<span class='text-muted'>غير متوفر</span>"</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.DefaultTaxRate)</dt>
+                    <dd class="col-sm-8">@(Model.DefaultTaxRate != 0 ? $"{Model.DefaultTaxRate:F2}%" : "<span class='text-muted'>غير متوفر</span>")</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.EnableNotifications)</dt>
+                    <dd class="col-sm-8">@(Model.EnableNotifications ? "مفعل" : "غير مفعل")</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.EnableAuditLog)</dt>
+                    <dd class="col-sm-8">@(Model.EnableAuditLog ? "مفعل" : "غير مفعل")</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.CreatedAt)</dt>
+                    <dd class="col-sm-8">@(Model.CreatedAt != DateTime.MinValue ? Model.CreatedAt.ToString("yyyy-MM-dd HH:mm") : "<span class='text-muted'>غير متوفر</span>")</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.UpdatedAt)</dt>
+                    <dd class="col-sm-8">@(Model.UpdatedAt.HasValue ? Model.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm") : "<span class='text-muted'>غير متوفر</span>")</dd>
+
+                </dl>
+            }
+            else
+            {
+                <p class="text-muted text-center">لم يتم العثور على إعدادات النظام.</p>
+            }
+
+            <div class="text-center mt-4">
+                <a asp-action="Edit" class="btn btn-primary"><i class="fas fa-edit"></i> تعديل الإعدادات</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .settings-card {
+        max-width: 800px;
+        margin: auto;
+    }
+
+    .description-list dt {
+        font-weight: bold;
+    }
+
+    .logo-preview {
+        max-height: 100px;
+        max-width: 100px;
+        border-radius: 10px;
+    }
+</style>

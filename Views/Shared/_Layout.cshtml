@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.Blazor
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -10,7 +11,7 @@
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark floating-nav">
-   
+
         <div class="container">
             <a class="navbar-brand" href="/">
                 <i class="bi bi-box-seam"></i> Warehouse ERP
@@ -63,7 +64,7 @@
                             <li><a class="dropdown-item" href="@Url.Action("Index", "Stocks")">Stocks</a></li>
                             <li><a class="dropdown-item" href="@Url.Action("Index", "StockEntries")">Stock Entries</a></li>
                             <li><a class="dropdown-item" href="@Url.Action("Index", "StockMovements")">Stock Movements</a></li>
-                          </ul>
+                        </ul>
                     </li>
 
                     <!-- Reports -->
@@ -80,16 +81,16 @@
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="bi bi-person-circle"></i>
                         </a>
-                     
+
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Settings</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "SystemSettings")"><i class="bi bi-gear"></i> Settings</a></li>
                             <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                         </ul>
                     </li>
                 </ul>
             </div>
         </div>
-        <button id="darkModeToggle" class="btn btn-outline-light">🌙</button>
+        @* <button id="darkModeToggle" class="btn btn-outline-light">🌙</button> *@
     </nav>
 
     <div class="container mt-4">
@@ -100,7 +101,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         }
-
+  
         @if (TempData["Error"] != null)
         {
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -111,7 +112,52 @@
 
         @RenderBody()
     </div>
+    <div class="floating-actions" dir="rtl">
+        <div class="fab-container">
+            <!-- Main FAB -->
+            <button class="fab-button fab-main">
+                <i class="bi bi-plus"></i>
+            </button>
 
+            <!-- Quick Actions Menu -->
+            <div class="fab-options">
+                <!-- Add Product/Item -->
+                <button class="fab-option" data-bs-toggle="tooltip" data-bs-placement="right" title="إضافة منتج جديد"
+                        onclick="location.href='@Url.Action("Create", "Products")'">
+                    <i class="bi bi-box-seam"></i>
+                    <span class="fab-label">إضافة منتج</span>
+                </button>
+
+                <!-- New Warehouse -->
+                <button class="fab-option" data-bs-toggle="tooltip" data-bs-placement="right" title="إضافة مستودع جديد"
+                        onclick="location.href='@Url.Action("Create", "Warehouses")'">
+                    <i class="bi bi-building-add"></i>
+                    <span class="fab-label">مستودع جديد</span>
+                </button>
+
+                <!-- Stock Entry -->
+                <button class="fab-option" data-bs-toggle="tooltip" data-bs-placement="right" title="إدخال مخزون"
+                        onclick="location.href='@Url.Action("Create", "StockEntries")'">
+                    <i class="bi bi-box-arrow-in-down"></i>
+                    <span class="fab-label">إدخال مخزون</span>
+                </button>
+
+                <!-- Transfer Stock -->
+                <button class="fab-option" data-bs-toggle="tooltip" data-bs-placement="right" title="نقل مخزون"
+                        onclick="location.href='@Url.Action("Create", "WarehouseTransfers")'">
+                    <i class="bi bi-arrow-left-right"></i>
+                    <span class="fab-label">نقل مخزون</span>
+                </button>
+
+                <!-- Quick Report -->
+                <button class="fab-option" data-bs-toggle="tooltip" data-bs-placement="right" title="تقرير سريع"
+                        onclick="location.href='@Url.Action("QuickReport", "Reports")'">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span class="fab-label">تقرير سريع</span>
+                </button>
+            </div>
+        </div>
+    </div>
     <footer class="footer mt-auto py-3">
         <div class="container">
             <div class="row">
@@ -137,25 +183,139 @@
 </body>
 <style>
     .floating-nav {
-        position: -webkit-sticky;
-        top: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 95%;
-        max-width: 1200px;
-        z-index: 1000;
-        border-radius: 15px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        backdrop-filter: blur(10px);
-        background-color: rgba(33, 37, 41, 0.95);
-        transition: all 0.3s ease;
+    position: -webkit-sticky;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 95%;     
+    max-width: 1200px;
+    z-index: 1000;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    backdrop-filter: blur(10px);
+    background-color: rgba(33, 37, 41, 0.95);
+    transition: all 0.3s ease;
     }
 
-        .floating-nav.scrolled {
-            top: 8px;
-            width: 98%;
-            border-radius: 10px;
+    .floating-nav.scrolled {
+    top: 8px;
+    width: 98%;
+    border-radius: 10px;
+    }
+
+   
+        .floating-actions {
+        position: fixed;
+        bottom: 2rem;
+        left: 2rem; /* RTL positioning */
+        z-index: 1000;
         }
+
+        .fab-container {
+        position: relative;
+        }
+
+        .fab-button {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        }
+
+        .fab-main {
+        background: linear-gradient(135deg, #0f3460 0%, #162955 100%);
+        color: white;
+        font-size: 1.5rem;
+        }
+
+        .fab-main:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        .fab-options {
+        position: absolute;
+        bottom: 70px;
+        right: 0;
+        display: none;
+        flex-direction: column;
+        gap: 1rem;
+        }
+
+        .fab-option {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: none;
+        background: white;
+        color: #0f3460;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        }
+
+        .fab-option:hover {
+        transform: scale(1.1);
+        background: #0f3460;
+        color: white;
+        }
+
+        .fab-label {
+        position: absolute;
+        right: 60px;
+        background: #333;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.3s ease;
+        }
+
+        .fab-option:hover .fab-label {
+        opacity: 1;
+        transform: translateX(-10px);
+        }
+
+        /* Animation Classes */
+        .fab-container.active .fab-main {
+        transform: rotate(45deg);
+        }
+
+        .fab-container.active .fab-options {
+        display: flex;
+        }
+
+        /* Mobile Responsive Adjustments */
+        
+        Edit
+        (max-width: 768px) {
+        .floating-actions
+
+    {
+        bottom: 1rem;
+        left: 1rem;
+    }
+
+    .fab-button {
+        width: 50px;
+        height: 50px;
+    }
+
+    .fab-option {
+        width: 40px;
+        height: 40px;
+    }
+
+    .fab-label {
+        display: none;
+    }
 
     .nav-link {
         position: relative;
@@ -245,9 +405,46 @@
     body {
         padding-top: -150px;
     }
+    
 </style>
+
+    
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
 @RenderSection("Styles", required: false)
 <script>
+        $(document).ready(function() {
+      // Select the select element and initialize it
+      $('.my-select2').select2(); // This is now defined.
+    });
+
+      document.addEventListener('DOMContentLoaded', function() {
+        const fabContainer = document.querySelector('.fab-container');
+        const fabMain = document.querySelector('.fab-main');
+
+        fabMain.addEventListener('click', function() {
+            fabContainer.classList.toggle('active');
+        });
+
+        // Close FAB menu when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!fabContainer.contains(event.target)) {
+                fabContainer.classList.remove('active');
+            }
+        });
+
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+
+        // Add smooth animations for options
+        const fabOptions = document.querySelectorAll('.fab-option');
+        fabOptions.forEach((option, index) => {
+            option.style.transitionDelay = `${index * 0.1}s`;
+        });
+    });
     // Scroll effect for navbar
     window.addEventListener('scroll', function() {
         const nav = document.querySelector('.floating-nav');

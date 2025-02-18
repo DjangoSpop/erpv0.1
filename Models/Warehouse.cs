@@ -10,7 +10,7 @@ public partial class Warehouse
 
     public string Location { get; set; } = null!;
 
-    public bool? IsActive { get; set; }
+    public bool? IsActive { get; set; } = null!;
 
     public DateTime CreatedAt { get; set; }
 

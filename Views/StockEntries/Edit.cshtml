@@ -1,4 +1,5 @@
-﻿@model erpv0._1.Models.StockEntry
+﻿@model erpv0._1.Models.ViewModels.StockEntryViewModel
+
 
 <div class="container-fluid px-4" dir="rtl">
     <div class="row justify-content-center">
@@ -16,9 +17,8 @@
                 <div class="card-body">
                     <form asp-action="Edit" method="post" class="needs-validation" novalidate>
                         <input type="hidden" asp-for="EntryId" />
-                        <input type="hidden" asp-for="CreatedAt" />
-                        <input type="hidden" asp-for="CreatedBy" />
-                        
+  
+
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-3"></div>
 
                         <!-- Product Information -->
@@ -63,7 +63,7 @@
                                     <!-- Receipt Date -->
                                     <div class="col-md-6">
                                         <div class="form-floating">
-                                            <input asp-for="ReceiptDate" type="date" 
+                                            <input asp-for="ReceiptDate" type="date"
                                                    class="form-control bg-dark text-white border-secondary"
                                                    value="@Model.ReceiptDate.ToString("yyyy-MM-dd")" required />
                                             <label asp-for="ReceiptDate">تاريخ الاستلام</label>
@@ -90,7 +90,7 @@
                                     <!-- New Quantity -->
                                     <div class="col-md-4">
                                         <div class="form-floating">
-                                            <input asp-for="Quantity" type="number" 
+                                            <input asp-for="Quantity" type="number"
                                                    class="form-control bg-dark text-white border-secondary"
                                                    min="0" required />
                                             <label asp-for="Quantity">الكمية الجديدة</label>
@@ -134,7 +134,7 @@
                                     <!-- Supplier Invoice -->
                                     <div class="col-md-6">
                                         <div class="form-floating">
-                                            <input asp-for="SupplierInvoice" 
+                                            <input asp-for="SupplierInvoice"
                                                    class="form-control bg-dark text-white border-secondary"
                                                    required maxlength="100" />
                                             <label asp-for="SupplierInvoice">رقم فاتورة المورد</label>
@@ -145,33 +145,7 @@
                             </div>
                         </div>
 
-                        <!-- History Section -->
-                        <div class="card bg-secondary bg-opacity-10 mb-4">
-                            <div class="card-body">
-                                <h5 class="card-title mb-3">معلومات التتبع</h5>
-                                <div class="row g-2">
-                                    <div class="col-md-6">
-                                        <div class="bg-dark p-3 rounded">
-                                            <small class="text-white-50">أنشئ بواسطة</small>
-                                            <div class="text-white">@Model.CreatedBy</div>
-                                            <small class="text-white-50">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
-                                        </div>
-                                    </div>
-                                    @if (Model.UpdatedAt.HasValue)
-                                    {
-                                        <div class="col-md-6">
-                                            <div class="bg-dark p-3 rounded">
-                                                <small class="text-white-50">آخر تحديث بواسطة</small>
-                                                <div class="text-white">@Model.UpdatedBy</div>
-                                                <small class="text-white-50">@Model.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</small>
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Form Actions -->
+                                               <!-- Form Actions -->
                         <div class="d-flex justify-content-between">
                             <button type="submit" class="btn btn-primary px-5">
                                 <i class="bi bi-check-lg me-2"></i>حفظ التغييرات
@@ -194,31 +168,9 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    
+
     <script>
-        $(document).ready(function() {
-            // Initialize Select2
-            $('.form-select').select2({
-                theme: 'bootstrap-5',
-                dir: 'rtl',
-                language: 'ar',
-                width: '100%'
-            });
-
-            // Price validation
-            $('#SellingPrice').on('change', function() {
-                const costPrice = parseFloat($('#CostPrice').val()) || 0;
-                const sellingPrice = parseFloat($(this).val()) || 0;
-
-                if (sellingPrice < costPrice) {
-                    Swal.fire({
-                        title: 'تنبيه',
-                        text: 'سعر البيع أقل من سعر التكلفة!',
-                        icon: 'warning',
-                        confirmButtonText: 'فهمت'
-                    });
-                }
-            });
+      
 
             // Quantity change warning
             const originalQuantity = @Model.Quantity;
@@ -268,7 +220,6 @@
         });
     </script>
 }
-
 @section Styles {
     <style>
         .form-floating > .form-control,
@@ -278,11 +229,11 @@
             border-color: rgba(255, 255, 255, 0.1);
         }
 
-        .form-floating > .form-control:focus,
-        .form-floating > .form-select:focus {
-            border-color: #4e73df;
-            box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
-        }
+            .form-floating > .form-control:focus,
+            .form-floating > .form-select:focus {
+                border-color: #4e73df;
+                box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+            }
 
         .form-floating > label {
             color: rgba(255, 255, 255, 0.7);

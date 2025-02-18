@@ -67,36 +67,49 @@
         </div>
     </div>
 
-    <!-- Search and Filter -->
-    <div class="card bg-dark text-white mb-4">
-        <div class="card-body">
-            <div class="row g-3">
+   <div class="card bg-dark text-white mb-4">
+    <div class="card-body">
+        <form method="get"  >
+            <div class="row g-3 align-items-center">
+                
+                <!-- Search Input (Right Side) -->
                 <div class="col-md-8">
-                    <form method="get" class="d-flex">
-                        <div class="input-group">
-                            <input type="text" name="searchTerm" value="@Model.SearchTerm" 
-                                   class="form-control bg-secondary border-0 text-white"
-                                   placeholder="ابحث عن طريق الكود، الاسم، أو الموقع...">
-                            <button class="btn btn-primary" type="submit">
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </div>
-                    </form>
+                    <div class="input-group">
+                        <input type="text" name="searchTerm" value="@Model.SearchTerm" 
+                               class="form-control bg-secondary border-0 text-white"
+                               placeholder="ابحث عن طريق الكود، الاسم، أو الموقع...">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
                 </div>
+
+                <!-- Status Filter (Left Side) -->
                 <div class="col-md-4">
-                                      <select name="isActive" class="form-select bg-secondary border-0 text-white"
-                                onchange="this.form.submit()">
-                            <option value="">كل المستودعات</option>
-                            <option value="true" selected="@(Model.IsActiveFilter)">النشطة فقط</option>
-                            <option value="false" selected="@(Model.IsActiveFilter)">غير النشطة</option>
+                    <div class="input-group">
+                        <label for="statusFilter" class="input-group-text bg-primary text-white border-primary">
+                            <i class="fas fa-filter me-2"></i> الحالة:
+                        </label>
+                        <select name="isActive" id="statusFilter" 
+                                class="form-select border-primary bg-secondary text-white" 
+                                onchange="this.form.submit()"
+                                aria-label="Filter by warehouse status">
+                            <option value="" >
+                                    كل المستودعات@(!Model.IsActiveFilter.HasValue ? "" : "")
+                            </option>
+                            <option value="true">
+                                    🟢 النشطة @(Model.IsActiveFilter == true ? "selected" : "")
+                            </option>
+                            <option value="false" >
+                                    🔴 غير النشطة@(Model.IsActiveFilter == false ? "selected" : "")
+                            </option>
                         </select>
-                     
-                  
+                    </div>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
-
+</div>
     <!-- Warehouses Table -->
     <div class="card bg-dark text-white">
         <div class="card-body p-0">
@@ -260,5 +273,15 @@
             width: 2.5em;
             height: 1.25em;
         }
+
+        .form-select:focus {
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+            border-color: #0d6efd;
+        }
+
+        .input-group-text {
+            transition: all 0.3s ease;
+        }
+        
     </style>
 }

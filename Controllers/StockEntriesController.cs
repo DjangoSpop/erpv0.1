@@ -1,216 +1,248 @@
 ﻿using erpv0._1.Data;
 using erpv0._1.Models;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.Blazor;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
-using OfficeOpenXml;
+using erpv0._1.Models.ViewModels;
 using OfficeOpenXml.Style;
+using OfficeOpenXml;
 
-namespace erpv0._1.Controllers
+public class StockEntriesController : Controller
 {
-    public class StockEntriesController : Controller
+    private readonly ApplicationDbContext _context;
+    private readonly ILogger<StockEntriesController> _logger;
+
+    public StockEntriesController(ApplicationDbContext context, ILogger<StockEntriesController> logger)
     {
-        private readonly ApplicationDbContext _context;
-   
-        private readonly ILogger<StockEntriesController> _logger;
-        private readonly IMemoryCache _cache;
-
-        public StockEntriesController( ILogger<StockEntriesController> logger, IMemoryCache cache, ApplicationDbContext context)
+        _context = context;
+        _logger = logger;
+    }
+    public async Task<IActionResult> Index(string searchTerm, int? warehouseId, int? productId)
+    {
+        try
         {
-            
-            _context = context;
-            _logger = logger;
-            _cache = cache;
-        }
-
-     
-
-
-        private async Task LoadViewBagData()
-        {
-            ViewBag.Products = await _context.Products
-                .OrderBy(p => p.ProductName)
-                .Select(p => new SelectListItem
-                {
-                    Value = p.ProductId.ToString(),
-                    Text = p.ProductName
-                })
-            .ToListAsync();
-
-            ViewBag.Warehouses = await _context.Warehouses
-                .Where(w => w.IsActive == true)
-                .OrderBy(w => w.Name)
-                .Select(w => new SelectListItem
-                {
-                    Value = w.WarehouseId.ToString(),
-                    Text = w.Name
-                })
+            var entries = await _context.StockEntries
+                .Include(s => s.Product)
+                .Include(s => s.Warehouse)
                 .ToListAsync();
+
+            // Apply filtering efficiently before calling ToList()
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                searchTerm = searchTerm.Trim().ToLower();
+                entries = entries
+                    .Where(s => s.BatchNumber.ToLower().Contains(searchTerm) ||
+                          s.SupplierInvoice.ToLower().Contains(searchTerm))
+                    .ToList();
+            }
+
+            if (warehouseId.HasValue)
+                entries = entries.Where(s => s.WarehouseId == warehouseId).ToList();
+
+            if (productId.HasValue)
+                entries = entries.Where(s => s.ProductId == productId).ToList();
+
+            await LoadViewBagData();
+            return View(entries);
         }
-        public async Task<IActionResult> Index(string searchTerm, int? warehouseId, int? productId)
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading stock entries");
+            TempData["Error"] = "حدث خطأ أثناء تحميل بيانات المخزون";
+            return View(new List<StockEntry>());
+        }
+    }
+
+
+
+
+    [HttpGet]
+    public async Task<IActionResult> Create()
+    {
+        await LoadViewBagData();
+        var viewModel = new StockEntryViewModel
+        {
+            ReceiptDate = DateTime.Today,
+            MaxDiscount = 0
+        };
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(StockEntryViewModel viewModel)
+    {
+        if (ModelState.IsValid)
         {
             try
             {
-                var entries = await _context.StockEntries
-                    .Include(s => s.Product)
-                    .Include(s => s.Warehouse)
-                    .ToListAsync();
-
-                // Apply filtering efficiently before calling ToList()
-                if (!string.IsNullOrWhiteSpace(searchTerm))
+                // Check for unique batch number
+                if (await _context.StockEntries.AnyAsync(s => s.BatchNumber == viewModel.BatchNumber))
                 {
-                    searchTerm = searchTerm.Trim().ToLower();
-                    entries = entries
-                        .Where(s => s.BatchNumber.ToLower().Contains(searchTerm) ||
-                              s.SupplierInvoice.ToLower().Contains(searchTerm))
-                        .ToList();
+                    ModelState.AddModelError("BatchNumber", "This batch number already exists");
+                    await LoadViewBagData();
+                    return View(viewModel);
                 }
 
-                if (warehouseId.HasValue)
-                    entries = entries.Where(s => s.WarehouseId == warehouseId).ToList();
+                // Map ViewModel to Domain Model
+                var stockEntry = new StockEntry
+                {
+                    ProductId = viewModel.ProductId,
+                    WarehouseId = viewModel.WarehouseId,
+                    BatchNumber = viewModel.BatchNumber,
+                    Quantity = viewModel.Quantity,
+                    CostPrice = viewModel.CostPrice,
+                    SellingPrice = viewModel.SellingPrice,
+                    MaxDiscount = viewModel.MaxDiscount,
+                    ReceiptDate = viewModel.ReceiptDate,
+                    SupplierInvoice = viewModel.SupplierInvoice,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "System", // Replace with actual user when auth is implemented
+                    UpdatedAt = DateTime.UtcNow,
+                    UpdatedBy = "System"
+                };
 
-                if (productId.HasValue)
-                    entries = entries.Where(s => s.ProductId == productId).ToList();
+                _context.Add(stockEntry);
+                await _context.SaveChangesAsync();
 
-                await LoadViewBagData();
-                return View(entries);
+                // Create initial stock movement
+                var movement = new StockMovement
+                {
+                    ProductId = stockEntry.ProductId,
+                    StockEntryId = stockEntry.EntryId,
+                    MovementType = "IN",
+                    Quantity = stockEntry.Quantity,
+                    MovementDate = DateTime.UtcNow,
+                    Reference = $"Initial Stock Entry - {stockEntry.BatchNumber}",
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "System",
+                    UpdatedAt = DateTime.UtcNow,
+                    UpdatedBy = "System"
+                };
+
+                _context.StockMovements.Add(movement);
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = "Stock entry created successfully";
+                return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading stock entries");
-                TempData["Error"] = "حدث خطأ أثناء تحميل بيانات المخزون";
-                return View(new List<StockEntry>());
+                _logger.LogError(ex, "Error creating stock entry");
+                ModelState.AddModelError("", "An error occurred while saving the stock entry");
             }
         }
 
+        await LoadViewBagData();
+        return View(viewModel);
+    }
 
-        [HttpGet]
-        public async Task<IActionResult> Create()
-        {
-            await LoadViewBagData();
-            return View(new StockEntry
+    private async Task LoadViewBagData()
+    {
+        // Enhanced product selection with more details
+        ViewBag.Products = await _context.Products
+            .OrderBy(p => p.ProductName)
+            .Select(p => new SelectListItem
             {
-                ReceiptDate = DateTime.Today,
-               
-            });
+                Value = p.ProductId.ToString(),
+                Text = $"{p.ProductName} (Code: {p.ProductId})"
+            })
+            .ToListAsync();
+
+        // Enhanced warehouse selection with more details
+        ViewBag.Warehouses = await _context.Warehouses
+            .Where(w => w.IsActive == true)
+            .OrderBy(w => w.Name)
+            .Select(w => new SelectListItem
+
+
+
+
+
+
+
+
+
+
+
+
+            {
+                Value = w.WarehouseId.ToString(),
+                Text = $"{w.Name} ({w.Location})"
+            })
+            .ToListAsync();
+    }
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var stockEntry = await _context.StockEntries
+            .Include(s => s.Product)
+            .Include(s => s.Warehouse)
+            .Include(s => s.StockMovements)
+            .FirstOrDefaultAsync(s => s.EntryId == id);
+
+        if (stockEntry == null)
+        {
+            return NotFound();
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(StockEntry entry)
+        // Map domain model to view model
+        var viewModel = new StockEntryViewModel
         {
-            if (ModelState.IsValid)
+            EntryId = stockEntry.EntryId,
+            ProductId = stockEntry.ProductId,
+            WarehouseId = stockEntry.WarehouseId,
+            BatchNumber = stockEntry.BatchNumber,
+            Quantity = stockEntry.Quantity,
+            CostPrice = stockEntry.CostPrice,
+            SellingPrice = stockEntry.SellingPrice,
+            MaxDiscount = stockEntry.MaxDiscount,
+            ReceiptDate = stockEntry.ReceiptDate,
+            SupplierInvoice = stockEntry.SupplierInvoice,
+            ProductName = stockEntry.Product.ProductName,
+            WarehouseName = stockEntry.Warehouse.Name
+        };
+
+        await LoadViewBagData();
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, StockEntryViewModel viewModel)
+    {
+        if (id != viewModel.EntryId)
+        {
+            return NotFound();
+        }
+
+        if (ModelState.IsValid)
+        {
+            try
             {
+                var existingEntry = await _context.StockEntries
+                    .Include(s => s.StockMovements)
+                    .FirstOrDefaultAsync(s => s.EntryId == id);
+
+                if (existingEntry == null)
+                {
+                    return NotFound();
+                }
+
+                using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
-                    // Validate batch number uniqueness
-                    if (await _context.StockEntries.AnyAsync(s => s.BatchNumber == entry.BatchNumber))
-                    {
-                        ModelState.AddModelError("BatchNumber", "رقم الدفعة مستخدم مسبقاً");
-                        await LoadViewBagData();
-                        return View(entry);
-                    }
-
-                    // Set audit fields
-                    entry.CreatedAt = DateTime.UtcNow;
-                    entry.CreatedBy = "System"; // Replace with actual user when auth is added
-                    entry.UpdatedAt = DateTime.UtcNow;
-                    entry.UpdatedBy = "System";
-
-                    _context.Add(entry);
-                    await _context.SaveChangesAsync();
-
-                    // Create stock movement record
-                    var movement = new StockMovement
-                    {
-                        ProductId = entry.ProductId,
-                        StockEntryId = entry.EntryId,
-                        MovementType = "IN",
-                        Quantity = entry.Quantity,
-                        MovementDate = DateTime.UtcNow,
-                        Reference = $"Initial Stock Entry - {entry.BatchNumber}",
-                        CreatedAt = DateTime.UtcNow,
-                        CreatedBy = "System",
-                        UpdatedAt = DateTime.UtcNow,
-                        UpdatedBy = "System"
-                    };
-
-                    _context.StockMovements.Add(movement);
-                    await _context.SaveChangesAsync();
-
-                    TempData["Success"] = "تم إضافة السجل بنجاح";
-                    return RedirectToAction(nameof(Details), new { id = entry.EntryId });
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error creating stock entry");
-                    ModelState.AddModelError("", "حدث خطأ أثناء حفظ البيانات");
-                }
-            }
-
-            await LoadViewBagData();
-            return View(entry);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Edit(int id)
-        {
-            var entry = await _context.StockEntries
-                .Include(s => s.Product)
-                .Include(s => s.Warehouse)
-                .FirstOrDefaultAsync(s => s.EntryId == id);
-
-            if (entry == null)
-            {
-                return NotFound();
-            }
-
-            await LoadViewBagData();
-            return View(entry);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, StockEntry entry)
-        {
-            if (id != entry.EntryId)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    var existingEntry = await _context.StockEntries
-                        .Include(s => s.StockMovements)
-                        .FirstOrDefaultAsync(s => s.EntryId == id);
-
-                    if (existingEntry == null)
-                    {
-                        return NotFound();
-                    }
-
-                    // Check if batch number changed and is unique
-                    if (entry.BatchNumber != existingEntry.BatchNumber &&
-                        await _context.StockEntries.AnyAsync(s => s.BatchNumber == entry.BatchNumber))
-                    {
-                        ModelState.AddModelError("BatchNumber", "رقم الدفعة مستخدم مسبقاً");
-                        await LoadViewBagData();
-                        return View(entry);
-                    }
-
                     // Check if quantity changed
-                    if (entry.Quantity != existingEntry.Quantity)
+                    if (viewModel.Quantity != existingEntry.Quantity)
                     {
-                        var quantityDifference = entry.Quantity - existingEntry.Quantity;
+                        var quantityDifference = viewModel.Quantity - existingEntry.Quantity;
 
                         // Create adjustment movement
                         var movement = new StockMovement
                         {
-                            ProductId = entry.ProductId,
-                            StockEntryId = entry.EntryId,
+                            ProductId = existingEntry.ProductId,
+                            StockEntryId = existingEntry.EntryId,
                             MovementType = quantityDifference > 0 ? "IN" : "OUT",
                             Quantity = Math.Abs(quantityDifference),
                             MovementDate = DateTime.UtcNow,
@@ -225,276 +257,274 @@ namespace erpv0._1.Controllers
                     }
 
                     // Update entry fields
-                    existingEntry.ProductId = entry.ProductId;
-                    existingEntry.WarehouseId = entry.WarehouseId;
-                    existingEntry.BatchNumber = entry.BatchNumber;
-                    existingEntry.Quantity = entry.Quantity;
-                    existingEntry.CostPrice = entry.CostPrice;
-                    existingEntry.SellingPrice = entry.SellingPrice;
-                    existingEntry.MaxDiscount = entry.MaxDiscount;
-                    existingEntry.ReceiptDate = entry.ReceiptDate;
-                    existingEntry.SupplierInvoice = entry.SupplierInvoice;
+                    existingEntry.ProductId = viewModel.ProductId;
+                    existingEntry.WarehouseId = viewModel.WarehouseId;
+                    existingEntry.BatchNumber = viewModel.BatchNumber;
+                    existingEntry.Quantity = viewModel.Quantity;
+                    existingEntry.CostPrice = viewModel.CostPrice;
+                    existingEntry.SellingPrice = viewModel.SellingPrice;
+                    existingEntry.MaxDiscount = viewModel.MaxDiscount;
+                    existingEntry.ReceiptDate = viewModel.ReceiptDate;
+                    existingEntry.SupplierInvoice = viewModel.SupplierInvoice;
                     existingEntry.UpdatedAt = DateTime.UtcNow;
                     existingEntry.UpdatedBy = "System";
 
                     await _context.SaveChangesAsync();
-                    TempData["Success"] = "تم تحديث السجل بنجاح";
-                    return RedirectToAction(nameof(Details), new { id = entry.EntryId });
+                    await transaction.CommitAsync();
+
+                    TempData["Success"] = "Stock entry updated successfully";
+                    return RedirectToAction(nameof(Details), new { id = existingEntry.EntryId });
                 }
-                catch (DbUpdateConcurrencyException)
+                catch
                 {
-                    if (!StockEntryExists(entry.EntryId))
-                    {
-                        return NotFound();
-                    }
+                    await transaction.RollbackAsync();
                     throw;
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error updating stock entry");
-                    ModelState.AddModelError("", "حدث خطأ أثناء حفظ البيانات");
-                }
             }
-
-            await LoadViewBagData();
-            return View(entry);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating stock entry");
+                ModelState.AddModelError("", "An error occurred while updating the stock entry");
+            }
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Details(int id)
+        await LoadViewBagData();
+        return View(viewModel);
+    }
+    [HttpGet]
+    public async Task<IActionResult> Details(int id)
+    {
+        var entry = await _context.StockEntries
+            .Include(s => s.Product)
+            .Include(s => s.Warehouse)
+            .Include(s => s.StockMovements)
+            .FirstOrDefaultAsync(s => s.EntryId == id);
+
+        if (entry == null)
+        {
+            return NotFound();
+        }
+
+        return View(entry);
+    }
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    //public async Task<IActionResult> Delete(int id)
+    //{
+    //    var entry = await _context.StockEntries
+    //        .Include(s => s.StockMovements)
+    //        .FirstOrDefaultAsync(s => s.EntryId == id);
+
+    //    if (entry == null)
+    //    {
+    //        return Json(new { success = false, message = "السجل غير موجود" });
+    //    }
+
+    //    if (entry.StockMovements.Count > 1)
+    //    {
+    //        return Json(new { success = false, message = "لا يمكن حذف السجل لوجود حركات مخزون مرتبطة به" });
+    //    }
+
+    //    try
+    //    {
+    //        _context.StockMovements.RemoveRange(entry.StockMovements);
+    //        _context.StockEntries.Remove(entry);
+    //        await _context.SaveChangesAsync();
+
+    //        return Json(new { success = true });
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, "Error deleting stock entry");
+    //        return Json(new { success = false, message = "حدث خطأ أثناء حذف السجل" });
+    //    }
+    //}
+
+    //[HttpPost]
+    //[ValidateAntiForgeryToken]
+    //public async Task<IActionResult> DeleteBulk([FromBody] List<int> ids)
+    //{
+    //    try
+    //    {
+    //        var entries = await _context.StockEntries
+    //            .Include(s => s.StockMovements)
+    //            .Where(s => ids.Contains(s.EntryId))
+    //            .ToListAsync();
+
+    //        // Check if any entry has multiple movements
+    //        if (entries.Any(e => e.StockMovements.Count > 1))
+    //        {
+    //            return Json(new { success = false, message = "بعض السجلات لا يمكن حذفها لوجود حركات مرتبطة" });
+    //        }
+
+    //        foreach (var entry in entries)
+    //        {
+    //            _context.StockMovements.RemoveRange(entry.StockMovements);
+    //            _context.StockEntries.Remove(entry);
+    //        }
+
+    //        await _context.SaveChangesAsync();
+    //        return Json(new { success = true });
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, "Error bulk deleting stock entries");
+    //        return Json(new { success = false, message = "حدث خطأ أثناء حذف السجلات" });
+    //    }
+    //}
+
+    private bool StockEntryExists(int id)
+    {
+        return _context.StockEntries.Any(e => e.EntryId == id);
+    }
+
+
+    [HttpPost]
+    public async Task<IActionResult> ImportExcel(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            TempData["Error"] = "يرجى تحميل ملف Excel صالح";
+            return RedirectToAction("Index");
+        }
+
+        using var stream = new MemoryStream();
+        await file.CopyToAsync(stream);
+        using var package = new ExcelPackage(stream);
+        var worksheet = package.Workbook.Worksheets.FirstOrDefault();
+        if (worksheet == null)
+        {
+            TempData["Error"] = "ملف Excel فارغ";
+            return RedirectToAction("Index");
+        }
+
+        var rowCount = worksheet.Dimension.Rows;
+        for (int row = 2; row <= rowCount; row++)
+        {
+            var batchNumber = worksheet.Cells[row, 1].Text;
+            if (!int.TryParse(worksheet.Cells[row, 2].Text, out int quantity) ||
+                !decimal.TryParse(worksheet.Cells[row, 3].Text, out decimal costPrice) ||
+                !decimal.TryParse(worksheet.Cells[row, 4].Text, out decimal sellingPrice) ||
+                !int.TryParse(worksheet.Cells[row, 5].Text, out int productId) ||
+                !int.TryParse(worksheet.Cells[row, 6].Text, out int warehouseId))
+            {
+                TempData["Error"] = $"خطأ في البيانات بالصف {row}";
+                return RedirectToAction("Index");
+            }
+
+            var stockEntry = new StockEntry
+            {
+                ProductId = productId,
+                WarehouseId = warehouseId,
+                BatchNumber = batchNumber,
+                Quantity = quantity,
+                CostPrice = costPrice,
+                SellingPrice = sellingPrice,
+                ReceiptDate = DateTime.UtcNow,
+                SupplierInvoice = "Auto-Generated",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                CreatedBy = "System",
+                UpdatedBy = "System"
+            };
+
+            _context.StockEntries.Add(stockEntry);
+        }
+
+        await _context.SaveChangesAsync();
+        TempData["Success"] = "تم استيراد البيانات بنجاح";
+        return RedirectToAction("Index");
+    }
+
+    // Export Excel File
+    public async Task<IActionResult> ExportExcel()
+    {
+        var stockEntries = await _context.StockEntries.ToListAsync();
+        using var package = new ExcelPackage();
+        var worksheet = package.Workbook.Worksheets.Add("StockEntries");
+
+        worksheet.Cells[1, 1].Value = "Batch Number";
+        worksheet.Cells[1, 2].Value = "Quantity";
+        worksheet.Cells[1, 3].Value = "Cost Price";
+        worksheet.Cells[1, 4].Value = "Selling Price";
+        worksheet.Cells[1, 5].Value = "Product ID";
+        worksheet.Cells[1, 6].Value = "Warehouse ID";
+
+        int row = 2;
+        foreach (var entry in stockEntries)
+        {
+            worksheet.Cells[row, 1].Value = entry.BatchNumber;
+            worksheet.Cells[row, 2].Value = entry.Quantity;
+            worksheet.Cells[row, 3].Value = entry.CostPrice;
+            worksheet.Cells[row, 4].Value = entry.SellingPrice;
+            worksheet.Cells[row, 5].Value = entry.ProductId;
+            worksheet.Cells[row, 6].Value = entry.WarehouseId;
+            row++;
+        }
+
+        var stream = new MemoryStream();
+        package.SaveAs(stream);
+        stream.Position = 0;
+        return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "StockEntries.xlsx");
+    }
+
+    // Delete Single Entry
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int id)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
             var entry = await _context.StockEntries
-                .Include(s => s.Product)
-                .Include(s => s.Warehouse)
-                .Include(s => s.StockMovements)
+                .Include(s => s.StockMovements) // Include related movements
                 .FirstOrDefaultAsync(s => s.EntryId == id);
 
             if (entry == null)
             {
-                return NotFound();
+                TempData["Error"] = "العنصر غير موجود";
+                return RedirectToAction("Index");
             }
 
-            return View(entry);
+            // Remove related StockMovements first
+            _context.StockMovements.RemoveRange(entry.StockMovements);
+            await _context.SaveChangesAsync();
+
+            // Now, remove the StockEntry
+            _context.StockEntries.Remove(entry);
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            TempData["Success"] = "تم حذف السجل بنجاح";
+            return RedirectToAction("Index");
         }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
+        catch (Exception ex)
         {
-            var entry = await _context.StockEntries
-                .Include(s => s.StockMovements)
-                .FirstOrDefaultAsync(s => s.EntryId == id);
-
-            if (entry == null)
-            {
-                return Json(new { success = false, message = "السجل غير موجود" });
-            }
-
-            if (entry.StockMovements.Count > 1)
-            {
-                return Json(new { success = false, message = "لا يمكن حذف السجل لوجود حركات مخزون مرتبطة به" });
-            }
-
-            try
-            {
-                _context.StockMovements.RemoveRange(entry.StockMovements);
-                _context.StockEntries.Remove(entry);
-                await _context.SaveChangesAsync();
-
-                return Json(new { success = true });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error deleting stock entry");
-                return Json(new { success = false, message = "حدث خطأ أثناء حذف السجل" });
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteBulk([FromBody] List<int> ids)
-        {
-            try
-            {
-                var entries = await _context.StockEntries
-                    .Include(s => s.StockMovements)
-                    .Where(s => ids.Contains(s.EntryId))
-                    .ToListAsync();
-
-                // Check if any entry has multiple movements
-                if (entries.Any(e => e.StockMovements.Count > 1))
-                {
-                    return Json(new { success = false, message = "بعض السجلات لا يمكن حذفها لوجود حركات مرتبطة" });
-                }
-
-                foreach (var entry in entries)
-                {
-                    _context.StockMovements.RemoveRange(entry.StockMovements);
-                    _context.StockEntries.Remove(entry);
-                }
-
-                await _context.SaveChangesAsync();
-                return Json(new { success = true });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error bulk deleting stock entries");
-                return Json(new { success = false, message = "حدث خطأ أثناء حذف السجلات" });
-            }
-        }
-
-        private bool StockEntryExists(int id)
-        {
-            return _context.StockEntries.Any(e => e.EntryId == id);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> ImportExcel(IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-            {
-                return Json(new { success = false, message = "لم يتم اختيار ملف" });
-            }
-
-            try
-            {
-                using var stream = new MemoryStream();
-                await file.CopyToAsync(stream);
-
-                using var package = new ExcelPackage(stream);
-                var worksheet = package.Workbook.Worksheets[0];
-                var rowCount = worksheet.Dimension?.Rows ?? 0;
-
-                if (rowCount < 2)
-                {
-                    return Json(new { success = false, message = "الملف فارغ" });
-                }
-
-                var entries = new List<StockEntry>();
-                var errors = new List<string>();
-
-                for (int row = 2; row <= rowCount; row++)
-                {
-                    try
-                    {
-                        var entry = new StockEntry
-                        {
-                            BatchNumber = worksheet.Cells[row, 1].GetValue<string>(),
-                            ProductId = worksheet.Cells[row, 2].GetValue<int>(),
-                            WarehouseId = worksheet.Cells[row, 3].GetValue<int>(),
-                            Quantity = worksheet.Cells[row, 4].GetValue<int>(),
-                            CostPrice = worksheet.Cells[row, 5].GetValue<decimal>(),
-                            SellingPrice = worksheet.Cells[row, 6].GetValue<decimal>(),
-                            ReceiptDate = worksheet.Cells[row, 7].GetValue<DateTime>(),
-                            SupplierInvoice = worksheet.Cells[row, 8].GetValue<string>(),
-                            CreatedAt = DateTime.UtcNow,
-                            CreatedBy = "System",
-                            UpdatedAt = DateTime.UtcNow,
-                            UpdatedBy = "System"
-                        };
-
-                        entries.Add(entry);
-                    }
-                    catch (Exception ex)
-                    {
-                        errors.Add($"خطأ في الصف {row}: {ex.Message}");
-                    }
-                }
-
-                if (errors.Any())
-                {
-                    return Json(new { success = false, message = string.Join("\n", errors) });
-                }
-
-                foreach (var entry in entries)
-                {
-                    _context.StockEntries.Add(entry);
-
-                    var movement = new StockMovement
-                    {
-                        ProductId = entry.ProductId,
-                        StockEntryId = entry.EntryId,
-                        MovementType = "IN",
-                        Quantity = entry.Quantity,
-                        MovementDate = DateTime.UtcNow,
-                        Reference = $"Initial Stock Entry - {entry.BatchNumber}",
-                        CreatedAt = DateTime.UtcNow,
-                        CreatedBy = "System",
-                        UpdatedAt = DateTime.UtcNow,
-                        UpdatedBy = "System"
-                    };
-
-                    _context.StockMovements.Add(movement);
-                }
-
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = $"تم استيراد {entries.Count} سجل بنجاح" });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error importing Excel file");
-                return Json(new { success = false, message = "حدث خطأ أثناء استيراد الملف" });
-            }
-        }
-
-        public async Task<IActionResult> ExportExcel()
-        {
-            try
-            {
-                var entries = await _context.StockEntries
-                    .Include(s => s.Product)
-                    .OrderByDescending(s => s.CreatedAt)
-                    .ToListAsync();
-
-                using var package = new ExcelPackage();
-                var worksheet = package.Workbook.Worksheets.Add("Stock Entries");
-
-                // Headers
-                worksheet.Cells["A1"].Value = "رقم الدفعة";
-                worksheet.Cells["B1"].Value = "المنتج";
-                worksheet.Cells["C1"].Value = "المستودع";
-                worksheet.Cells["D1"].Value = "الكمية";
-                worksheet.Cells["E1"].Value = "سعر التكلفة";
-                worksheet.Cells["F1"].Value = "سعر البيع";
-                worksheet.Cells["G1"].Value = "تاريخ الاستلام";
-                worksheet.Cells["H1"].Value = "رقم الفاتورة";
-
-                // Data
-                for (int i = 0; i < entries.Count; i++)
-                {
-                    var entry = entries[i];
-                    worksheet.Cells[i + 2, 1].Value = entry.BatchNumber;
-                    worksheet.Cells[i + 2, 2].Value = entry.Product;
-                    worksheet.Cells[i + 2, 3].Value = entry.WarehouseId; // Assuming WarehouseId is sufficient
-                    worksheet.Cells[i + 2, 4].Value = entry.Quantity;
-                    worksheet.Cells[i + 2, 5].Value = entry.CostPrice;
-                    worksheet.Cells[i + 2, 6].Value = entry.SellingPrice;
-                    worksheet.Cells[i + 2, 7].Value = entry.ReceiptDate.ToString("yyyy-MM-dd");
-                    worksheet.Cells[i + 2, 8].Value = entry.SupplierInvoice;
-                }
-
-                // Formatting
-                using (var range = worksheet.Cells[1, 1, 1, 8])
-                {
-                    range.Style.Font.Bold = true;
-                    range.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
-                }
-
-                worksheet.Cells.AutoFitColumns();
-
-                return File(
-                    package.GetAsByteArray(),
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    $"StockEntries_{DateTime.Now:yyyyMMdd}.xlsx"
-                );
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error exporting to Excel");
-                TempData["Error"] = "حدث خطأ أثناء تصدير البيانات";
-                return RedirectToAction(nameof(Index));
-            }
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Error deleting stock entry: {Message}", ex.Message);
+            TempData["Error"] = "حدث خطأ أثناء الحذف";
+            return RedirectToAction("Index");
         }
     }
+
+    // Bulk Delete Entries
+    [HttpPost]
+    public async Task<IActionResult> DeleteBulk([FromBody] List<int> ids)
+    {
+        var entries = await _context.StockEntries.Where(e => ids.Contains(e.EntryId)).ToListAsync();
+        if (!entries.Any())
+        {
+            return Json(new { success = false, message = "لم يتم العثور على العناصر" });
+        }
+
+        _context.StockEntries.RemoveRange(entries);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, message = "تم حذف السجلات المحددة بنجاح" });
+    }
+
+    // Index (with Filtering)
+   
 }
+
+

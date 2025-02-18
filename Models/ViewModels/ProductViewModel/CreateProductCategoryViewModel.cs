@@ -1,9 +1,9 @@
-﻿namespace ArabicWarehouseERP.Models.ViewModels
+﻿namespace erpv0._1.Models.ViewModels.ProductViewModel
 {
     using System.ComponentModel.DataAnnotations;
 
-    namespace ArabicWarehouseERP.Models.ViewModels
-    {
+
+    
         public class CreateProductCategoryViewModel
         {
             [Required(ErrorMessage = "اسم الفئة مطلوب")]
@@ -50,4 +50,4 @@
             public string? TranslatedDescription { get; set; }
         }
     }
-}
+
