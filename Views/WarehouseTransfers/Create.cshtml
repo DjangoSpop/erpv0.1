@@ -1,27 +1,28 @@
-﻿<!-- Example of UI/UX improvements in Create.cshtml -->
-@model erpv0._1.Models.WarehouseTransfer
+﻿@model erpv0._1.Models.ViewModels.WarhousesTransfer.WarehouseTransferCreateViewModel
+
 @{
     ViewData["Title"] = "إنشاء طلب نقل";
 }
 
-<div class="container-fluid px-4 mt-4">
+<div class="products-module">
     <div class="card shadow-sm border-0 rounded-3">
         <div class="card-header bg-primary bg-gradient d-flex justify-content-between align-items-center">
-            <h4 class="mb-0 text-white"><i class="bi bi-box-arrow-up-right me-2"></i>إنشاء طلب نقل جديد</h4>
+            <h4 class="mb-0 text-white">
+                <i class="bi bi-box-arrow-up-right me-2"></i> إنشاء طلب نقل جديد
+            </h4>
             <a asp-action="Index" class="btn btn-light btn-sm">
                 <i class="bi bi-arrow-left me-1"></i> العودة للقائمة
             </a>
         </div>
-
         <div class="card-body p-4">
-            <form asp-action="Create">
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
                 <div class="row g-4">
                     <!-- Source Warehouse -->
                     <div class="col-md-6">
-                        <label asp-for="SourceWarehouseId" class="form-label">المستودع المصدر</label>
-                        <select asp-for="SourceWarehouseId" class="form-select" asp-items="ViewBag.Warehouses">
+                        <label asp-for="SourceWarehouseId" class="form-label"></label>
+                        <select asp-for="SourceWarehouseId" class="form-select" asp-items="Model.AvailableWarehouses">
                             <option value="">-- اختر المستودع المصدر --</option>
                         </select>
                         <span asp-validation-for="SourceWarehouseId" class="text-danger"></span>
@@ -29,27 +30,28 @@
 
                     <!-- Destination Warehouse -->
                     <div class="col-md-6">
-                        <label asp-for="DestWarehouseId" class="form-label">المستودع الوجهة</label>
-                        <select asp-for="DestWarehouseId" class="form-select" asp-items="ViewBag.Warehouses">
+                        <label asp-for="DestWarehouseId" class="form-label"></label>
+                        <select asp-for="DestWarehouseId" class="form-select" asp-items="Model.AvailableWarehouses">
                             <option value="">-- اختر المستودع الوجهة --</option>
                         </select>
                         <span asp-validation-for="DestWarehouseId" class="text-danger"></span>
                     </div>
 
-                    <!-- Product Selection -->
+                    <!-- Product -->
                     <div class="col-md-8">
-                        <label asp-for="ProductId" class="form-label">المنتج</label>
-                        <select asp-for="ProductId" class="form-select" asp-items="ViewBag.Products">
+                        <label asp-for="ProductId" class="form-label"></label>
+                        <select id="ProductId" name="ProductId" class="form-select">
                             <option value="">-- اختر المنتج --</option>
                         </select>
                         <span asp-validation-for="ProductId" class="text-danger"></span>
                     </div>
 
-                    <!-- Quantity Input -->
+                    <!-- Quantity -->
                     <div class="col-md-4">
-                        <label asp-for="Quantity" class="form-label">الكمية</label>
-                        <input asp-for="Quantity" class="form-control" min="1" />
+                        <label asp-for="Quantity" class="form-label"></label>
+                        <input asp-for="Quantity" class="form-control" type="number" min="1" />
                         <span asp-validation-for="Quantity" class="text-danger"></span>
+                        <small id="stock-availability" class="text-info"></small>
                     </div>
                 </div>
 
@@ -74,13 +76,74 @@
     }
 
     <script>
-        $(document).ready(function() {
-            $('.form-select').select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                dir: 'rtl',
-                language: 'ar'
+        $(document).ready(function () {
+
+            // Function to load products based on selected source warehouse
+              function loadProducts(warehouseId) {
+        var $productSelect = $('#ProductId');
+        $productSelect.empty();
+        $productSelect.append($('<option>', { value: '', text: '-- اختر المنتج --' }));
+
+        if (warehouseId) {
+            $.ajax({
+                url: '@Url.Action("GetProductsByWarehouse", "WarehouseTransfers")',
+                data: { warehouseId: warehouseId },
+                success: function (products) {
+                    $.each(products, function (i, product) {
+                        $productSelect.append($('<option>', { value: product.productId, text: product.productName }));
+                    });
+                    // Clear stock info on warehouse change
+                    $('#stock-availability').text('');
+                },
+                error: function () {
+                    console.error('Error loading products.');
+                }
             });
+        }
+                $('#SourceWarehouseId').change(function () {
+            var selectedWarehouseId = $(this).val();
+            console.log("Selected Warehouse ID:", selectedWarehouseId);
+            loadProducts(selectedWarehouseId);
         });
+            // When the source warehouse changes, load its products
+            // $('#SourceWarehouseId').change(function () {
+            //     var selectedWarehouseId = $(this).val();
+            //     loadProducts(selectedWarehouseId);
+            // });
+                    success: function (products) {
+            console.log("Products received:", products);
+            var $productSelect = $('#ProductId');
+            $productSelect.empty();
+            $productSelect.append($('<option>', { value: '', text: '-- اختر المنتج --' }));
+            $.each(products, function (i, product) {
+                $productSelect.append($('<option>', { value: product.productId, text: product.productName }));
+            });
+            $('#stock-availability').text('');
+        }
+            // When the product is selected, fetch stock availability
+            $('#ProductId').change(function () {
+                var productId = $(this).val();
+                var warehouseId = $('#SourceWarehouseId').val();
+
+                if (productId && warehouseId) {
+                    $.ajax({
+                        url: '@Url.Action("GetStockAvailability", "WarehouseTransfers")',
+                        data: { productId: productId, warehouseId: warehouseId },
+                        success: function (data) {
+                            $('#stock-availability').text('المخزون المتاح: ' + data);
+                        },
+                        error: function () {
+                            $('#stock-availability').text('خطأ في جلب المخزون.');
+                        }
+                    });
+                } else {
+                    $('#stock-availability').text('');
+                }
+            });
+
+            // Trigger change in case a warehouse is pre-selected
+            $('#SourceWarehouseId').trigger('change');
+        });
+        }
     </script>
 }

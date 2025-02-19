@@ -1,5 +1,4 @@
-﻿@using erpv0._1.Models.ViewModels.WarhousesTransfer
-@model erpv0._1.Models.ViewModels.WarhousesTransfer.WarehouseTransferListViewModel
+﻿@model erpv0._1.Models.ViewModels.WarhousesTransfer.WarehouseTransferListViewModel
 
 @{
     ViewData["Title"] = "إدارة نقل المخزون";
@@ -32,7 +31,7 @@
     }
 }
 
-<div class="container-fluid" dir="rtl">
+<div class="products-module" dir="rtl">
     <!-- Stats Cards -->
     <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-4">
@@ -90,17 +89,17 @@
                     <div class="form-floating">
                         <select class="form-select" id="status" name="status">
                             <option value="">الكل</option>
-                            <option value="Pending" selected="@(Model.Status == "Pending")">قيد الانتظار</option>
-                            <option value="InProgress" selected="@(Model.Status == "InProgress")">جاري التنفيذ</option>
-                            <option value="Completed" selected="@(Model.Status == "Completed")">مكتمل</option>
+                            <option value="Pending">@(Model.Status == "Pending" ? "selected" : "")قيد الانتظار</option>
+                            <option value="InProgress">@(Model.Status == "InProgress" ? "selected" : "")جاري التنفيذ</option>
+                            <option value="Completed">@(Model.Status == "Completed" ? "selected" : "")مكتمل</option>
                         </select>
                         <label for="status">الحالة</label>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="form-floating">
-                        <select class="form-select" id="sourceWarehouseId" name="sourceWarehouseId"
-                                asp-items='@(new SelectList(Model.Warehouses, "WarehouseId", "Name", Model.SourceWarehouseId))'>
+                        <select class="form-select" id="sourceWarehouseId" name="sourceWarehouseId" 
+                                asp-items="@(ViewBag.Warehouses as SelectList)">
                             <option value="">كل المستودعات</option>
                         </select>
                         <label for="sourceWarehouseId">المستودع المصدر</label>
@@ -201,44 +200,35 @@
                 <div class="modal-body">
                     <!-- Source Warehouse -->
                     <div class="form-floating mb-3">
-                        <select asp-for="NewTransfer.SourceWarehouseId" class="form-select" required>
+                        <select asp-for="NewTransfer.SourceWarehouseId" class="form-select" 
+                                asp-items="@(ViewBag.Warehouses as SelectList)" required>
                             <option value="">اختر المستودع المصدر</option>
-                            @foreach (var warehouse in Model.Warehouses)
-                            {
-                                <option value="@warehouse.WarehouseId">@warehouse.Name (@warehouse.Location)</option>
-                            }
                         </select>
-                        <label for="NewTransfer.SourceWarehouseId">المستودع المصدر</label>
+                        <label for="NewTransfer_SourceWarehouseId">المستودع المصدر</label>
                     </div>
 
                     <!-- Destination Warehouse -->
                     <div class="form-floating mb-3">
-                        <select asp-for="NewTransfer.DestWarehouseId" class="form-select" required>
+                        <select asp-for="NewTransfer.DestWarehouseId" class="form-select" 
+                                asp-items="@(ViewBag.Warehouses as SelectList)" required>
                             <option value="">اختر المستودع الوجهة</option>
-                            @foreach (var warehouse in Model.Warehouses)
-                            {
-                                <option value="@warehouse.WarehouseId">@warehouse.Name (@warehouse.Location)</option>
-                            }
                         </select>
-                        <label for="NewTransfer.DestWarehouseId">المستودع الوجهة</label>
+                        <label for="NewTransfer_DestWarehouseId">المستودع الوجهة</label>
                     </div>
 
                     <!-- Product -->
                     <div class="form-floating mb-3">
-                        <select asp-for="NewTransfer.ProductId" class="form-select" required>
+                        <select asp-for="NewTransfer.ProductId" class="form-select" 
+                                asp-items="@(ViewBag.Products as SelectList)" required>
                             <option value="">اختر المنتج</option>
-                            @foreach (var product in Model.Products)
-                            {
-                                <option value="@product.ProductId">@product.ProductName</option>
-                            }
                         </select>
-                        <label for="NewTransfer.ProductId">المنتج</label>
+                        <label for="NewTransfer_ProductId">المنتج</label>
                     </div>
 
                     <!-- Quantity -->
                     <div class="form-floating mb-3">
                         <input asp-for="NewTransfer.Quantity" type="number" class="form-control" min="1" required>
-                        <label for="NewTransfer.Quantity">الكمية</label>
+                        <label for="NewTransfer_Quantity">الكمية</label>
                     </div>
                 </div>
                 <div class="modal-footer">

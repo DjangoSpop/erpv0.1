@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using System.ComponentModel.DataAnnotations;
 
 namespace erpv0._1.Models.ViewModels.WarhousesTransfer
 {
@@ -23,60 +24,71 @@ namespace erpv0._1.Models.ViewModels.WarhousesTransfer
         public PagingInfo PagingInfo { get; set; } = new PagingInfo();
 
         // Create a new transfer using the unified model
-        public TransferCreateViewModel NewTransfer { get; set; } = new();
+        public WarehouseTransferCreateViewModel NewTransfer { get; set; } = new();
     }
+    //public class WarehouseTransferCreateViewModel
+    //{
+    //    [Required(ErrorMessage = "المستودع المصدر مطلوب.")]
+    //    [Display(Name = "المستودع المصدر")]
+    //    public int SourceWarehouseId { get; set; }
+
+    //    [Required(ErrorMessage = "المستودع الوجهة مطلوب.")]
+    //    [Display(Name = "المستودع الوجهة")]
+    //    public int DestWarehouseId { get; set; }
+
+    //    [Required(ErrorMessage = "المنتج مطلوب.")]
+    //    [Display(Name = "المنتج")]
+    //    public int ProductId { get; set; }
+
+    //    [Required(ErrorMessage = "الكمية مطلوبة.")]
+    //    [Range(1, int.MaxValue, ErrorMessage = "الكمية يجب أن تكون أكبر من صفر.")]
+    //    [Display(Name = "الكمية")]
+    //    public int Quantity { get; set; }
+
+    //    // This holds the list of available warehouses for the dropdowns.
+    //    public List<SelectListItem> AvailableWarehouses { get; set; } = new List<SelectListItem>();
+
+    //    // We don't need AvailableProducts here; it's handled by AJAX.
+    //}
     public class WarehouseTransferCreateViewModel
     {
-
-
-
-
-        [Required(ErrorMessage = "يرجى اختيار المستودع المصدر")]
+        [Display(Name = "المستودع المصدر")]
+        [Required(ErrorMessage = "يجب اختيار المستودع المصدر")]
         public int SourceWarehouseId { get; set; }
 
-        [Required(ErrorMessage = "يرجى اختيار المستودع الوجهة")]
+        [Display(Name = "المستودع الوجهة")]
+        [Required(ErrorMessage = "يجب اختيار المستودع الوجهة")]
         public int DestWarehouseId { get; set; }
 
-        [Required(ErrorMessage = "يرجى اختيار المنتج")]
+        [Display(Name = "المنتج")]
+        [Required(ErrorMessage = "يجب اختيار المنتج")]
         public int ProductId { get; set; }
 
-        [Required(ErrorMessage = "يرجى إدخال الكمية")]
-        [Range(1, int.MaxValue, ErrorMessage = "يجب أن تكون الكمية أكبر من صفر")]
+        [Display(Name = "الكمية")]
+        [Required(ErrorMessage = "الكمية مطلوبة")]
+        [Range(1, int.MaxValue, ErrorMessage = "الكمية يجب أن تكون أكبر من صفر")]
         public int Quantity { get; set; }
 
-        public string? Notes { get; set; }
-        public List<Warehouse> AvailableWarehouses { get; set; } = new();
-        public List<Product> AvailableProducts { get; set; } = new();
+        /// <summary>
+        /// List of available warehouses for both source and destination dropdowns.
+        /// </summary>
+        public IEnumerable<SelectListItem> AvailableWarehouses { get; set; } = new List<SelectListItem>();
+
+        /// <summary>
+        /// (Optional) List of available products. This list can be used to pre-populate the product dropdown 
+        /// if you prefer not to load it via AJAX.
+        /// </summary>
+        public IEnumerable<SelectListItem> AvailableProducts { get; set; } = new List<SelectListItem>();
     }
-    // Unified PagingInfo class
+
+    //}
     public class PagingInfo
     {
         public int TotalItems { get; set; }
         public int ItemsPerPage { get; set; }
         public int CurrentPage { get; set; }
-        public int TotalPages => (int)Math.Ceiling((decimal)TotalItems / ItemsPerPage);
-    }
 
-    // Consolidated Create Transfer ViewModel
-    public class TransferCreateViewModel
-    {
-        [Required(ErrorMessage = "يرجى اختيار المستودع المصدر")]
-        public int SourceWarehouseId { get; set; }
-
-        [Required(ErrorMessage = "يرجى اختيار المستودع الوجهة")]
-        public int DestWarehouseId { get; set; }
-
-        [Required(ErrorMessage = "يرجى اختيار المنتج")]
-        public int ProductId { get; set; }
-
-        [Required(ErrorMessage = "يرجى إدخال الكمية")]
-        [Range(1, int.MaxValue, ErrorMessage = "يجب أن تكون الكمية أكبر من صفر")]
-        public int Quantity { get; set; }
-
-        [MaxLength(500, ErrorMessage = "الملاحظات يجب ألا تتجاوز 500 حرف")]
-        public string? Notes { get; set; }
-
-        public List<Warehouse> AvailableWarehouses { get; set; } = new();
-        public List<Product> AvailableProducts { get; set; } = new();
+        public int TotalPages =>
+            (int)Math.Ceiling((decimal)TotalItems / ItemsPerPage);
     }
 }

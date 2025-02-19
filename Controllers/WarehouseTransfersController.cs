@@ -1,4 +1,5 @@
-﻿using erpv0._1.Data;
+﻿using AspNetCoreGeneratedDocument;
+using erpv0._1.Data;
 using erpv0._1.Models;
 using erpv0._1.Models.ViewModels.WarhousesTransfer;
 using Microsoft.AspNetCore.Mvc;
@@ -33,6 +34,8 @@ namespace erpv0._1.Controllers
       int? destWarehouseId,
       int pageNumber = 1)
         {
+            ViewBag.Warehouses = new SelectList(_context.Warehouses.ToList(), "WarehouseId", "Name");
+            ViewBag.Products = new SelectList(_context.Products.ToList(), "ProductId", "ProductName");
             try
             {
                 var query = _context.WarehouseTransfers
@@ -114,13 +117,12 @@ namespace erpv0._1.Controllers
         [HttpGet]
         public async Task<IActionResult> GetProductsByWarehouse(int warehouseId)
         {
-            var products = await _context.Stocks
-                .Where(s => s.StoreId == warehouseId)
-                .Select(s => s.Product)
-                .Distinct()
-                .ToListAsync();
+            var products = await _context.Products
+       //.Where(p => p.WarehouseId == warehouseId) // if applicable
+       .Select(p => new { productId = p.ProductId, productName = p.ProductName })
+       .ToListAsync();
 
-            return Json(products.Select(p => new { p.ProductId, p.ProductName }));
+            return Json(products);
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -138,12 +140,14 @@ namespace erpv0._1.Controllers
 
             return Json(new { success = true, message = "تم تحديث حالة طلب النقل بنجاح." });
         }
+        [HttpGet]
         public async Task<IActionResult> Create()
         {
             try
             {
-                await PrepareCreateViewData();
-                return View(new WarehouseTransfer());
+                var viewModel = new WarehouseTransferCreateViewModel();
+                await PrepareCreateViewData(viewModel);
+                return View(viewModel);
             }
             catch (Exception ex)
             {
@@ -155,69 +159,105 @@ namespace erpv0._1.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(WarehouseTransfer model)
+        public async Task<IActionResult> Create(WarehouseTransferCreateViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                await PrepareCreateViewData();
+                await PrepareCreateViewData(model);
                 return View(model);
             }
 
-            try
+            if (model.SourceWarehouseId == model.DestWarehouseId)
             {
-                if (model.SourceWarehouseId == model.DestWarehouseId)
-                {
-                    ModelState.AddModelError("", "لا يمكن أن يكون المستودع المصدر والوجهة نفس المستودع");
-                    await PrepareCreateViewData();
-                    return View(model);
-                }
-
-                // Validate stock availability in source warehouse
-                var sourceStock = await _context.StockEntries
-                    .Where(s => s.WarehouseId == model.SourceWarehouseId && s.ProductId == model.ProductId)
-                    .SumAsync(s => s.Quantity);
-
-                if (model.Quantity > sourceStock)
-                {
-                    ModelState.AddModelError("", "الكمية المطلوبة غير متوفرة في المستودع المصدر");
-                    await PrepareCreateViewData();
-                    return View(model);
-                }
-
-                var transfer = new WarehouseTransfer
-                {
-                    SourceWarehouseId = model.SourceWarehouseId,
-                    DestWarehouseId = model.DestWarehouseId,
-                    ProductId = model.ProductId,
-                    Quantity = model.Quantity,
-                    Status = "Pending",
-                    RequestedDate = DateTime.UtcNow,
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedBy = User?.Identity?.Name ?? "System",
-                    UpdatedAt = DateTime.UtcNow,
-                    UpdatedBy = User?.Identity?.Name ?? "System"
-                };
-
-                _context.Add(transfer);
-                await _context.SaveChangesAsync();
-                TempData["Success"] = "تم إنشاء طلب النقل بنجاح";
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating warehouse transfer");
-                ModelState.AddModelError("", "حدث خطأ أثناء إنشاء طلب النقل");
-                await PrepareCreateViewData();
+                ModelState.AddModelError("", "لا يمكن أن يكون المستودع المصدر والوجهة نفس المستودع");
+                await PrepareCreateViewData(model);
                 return View(model);
+            }
+
+            using (var transaction = _context.Database.BeginTransaction())
+            {
+                try
+                {
+                    var sourceStock = await _context.StockEntries
+                        .Where(s => s.WarehouseId == model.SourceWarehouseId && s.ProductId == model.ProductId)
+                        .SumAsync(s => (int?)s.Quantity) ?? 0;
+
+                    if (model.Quantity > sourceStock)
+                    {
+                        ModelState.AddModelError("", "الكمية المطلوبة غير متوفرة في المستودع المصدر");
+                        await PrepareCreateViewData(model);
+                        return View(model);
+                    }
+
+                    var transfer = new WarehouseTransfer
+                    {
+                        SourceWarehouseId = model.SourceWarehouseId,
+                        DestWarehouseId = model.DestWarehouseId,
+                        ProductId = model.ProductId,
+                        Quantity = model.Quantity,
+                        Status = "Pending",
+                        RequestedDate = DateTime.UtcNow,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow,
+                        CreatedBy = User?.Identity?.Name ?? "System",
+                        UpdatedBy = User?.Identity?.Name ?? "System",
+                        ApprovedBy = string.Empty
+                    };
+
+                    _context.Add(transfer);
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    TempData["Success"] = "تم إنشاء طلب النقل بنجاح";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Error creating warehouse transfer");
+                    ModelState.AddModelError("", "حدث خطأ أثناء إنشاء طلب النقل");
+                    await PrepareCreateViewData(model);
+                    return View(model);
+                }
             }
         }
 
+        public IActionResult Details(int id)
+        {
+            var transfer = _context.WarehouseTransfers.Find(id);
+            if (transfer == null)
+            {
+                return NotFound();
+            }
+            return View(transfer);
+        }
 
+        public async Task PrepareCreateViewData(WarehouseTransferCreateViewModel model)
+        {
+            // Populate AvailableWarehouses from your database
+            model.AvailableWarehouses = await _context.Warehouses
+                .Select(w => new SelectListItem
+                {
+                    Value = w.WarehouseId.ToString(),
+                    Text = w.Name
+                })
+                .ToListAsync();
 
+            // Optionally, if you want to preload available products:
+            model.AvailableProducts = await _context.Products
+                .Select(p => new SelectListItem
+                {
+                    Value = p.ProductId.ToString(),
+                    Text = p.ProductName
+                })
+                .ToListAsync();
+        }
         private async Task PrepareCreateViewData()
         {
+           
             try
             {
+
                 ViewBag.Warehouses = await _context.Warehouses
                     .OrderBy(w => w.Name)
                     .Select(w => new SelectListItem
@@ -245,6 +285,7 @@ namespace erpv0._1.Controllers
             }
         }
     }
+
 }
 
         //[HttpPost, ActionName("Create")]

@@ -1,0 +1,156 @@
+﻿/* ================================
+   Products Module - Dark Theme
+   ================================ */
+
+/* Base container for Product Module pages */
+.products-module {
+    background-color: #1e1e2f;
+    color: #ffffff;
+    padding: 2rem;
+    min-height: 100vh;
+}
+
+    /* Headings & Labels */
+    .products-module h1,
+    .products-module h2,
+    .products-module h3,
+    .products-module h4,
+    .products-module h5,
+    .products-module h6,
+    .products-module label {
+        color: #ffffff;
+    }
+
+    /* Buttons */
+    .products-module .btn-primary {
+        background-color: #0d47a1;
+        border-color: #0d47a1;
+        color: #ffffff;
+    }
+
+        .products-module .btn-primary:hover,
+        .products-module .btn-primary:focus {
+            background-color: #0a3575;
+            border-color: #0a3575;
+        }
+
+    .products-module .btn-dark {
+        background-color: #2a3f54;
+        border-color: #2a3f54;
+        color: #ffffff;
+    }
+
+        .products-module .btn-dark:hover,
+        .products-module .btn-dark:focus {
+            background-color: #1a293e;
+            border-color: #1a293e;
+        }
+
+    .products-module .btn-secondary {
+        background-color: #3a3f54;
+        border-color: #3a3f54;
+        color: #ffffff;
+    }
+
+        .products-module .btn-secondary:hover,
+        .products-module .btn-secondary:focus {
+            background-color: #2a3f54;
+            border-color: #2a3f54;
+        }
+
+    /* Form Controls */
+    .products-module .form-control,
+    .products-module .form-select {
+        background-color: #2a3f54;
+        border: 1px solid #3a3f54;
+        color: #ffffff;
+    }
+
+        .products-module .form-control:focus,
+        .products-module .form-select:focus {
+            background-color: #2a3f54;
+            border-color: #0d47a1;
+            color: #ffffff;
+        }
+
+    .products-module .form-label {
+        color: #ffffff;
+    }
+
+    /* Tables */
+    .products-module .table {
+        background-color: #2a3f54;
+        border: 1px solid #3a3f54;
+        color: #ffffff;
+    }
+
+        .products-module .table thead {
+            background-color: #1a293e;
+        }
+
+    .products-module .table-striped tbody tr:nth-of-type(odd) {
+        background-color: #242b3d;
+    }
+
+    /* Cards */
+    .products-module .card {
+        background-color: #2a3f54;
+        border: none;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+
+    .products-module .card-header {
+        background-color: #1a293e;
+        border-bottom: none;
+        color: #ffffff;
+    }
+
+    .products-module .card-body {
+        color: #ffffff;
+    }
+
+    /* DataTable Overrides (if using DataTables) */
+    .products-module .dataTables_wrapper .dataTables_filter input {
+        background-color: #2a3f54;
+        border: 1px solid #3a3f54;
+        color: #ffffff;
+    }
+
+    /* Modal Windows */
+    .products-module .modal-content {
+        background-color: #2a3f54;
+        color: #ffffff;
+    }
+
+    .products-module .modal-header {
+        background-color: #1a293e;
+    }
+
+    .products-module .modal-footer .btn {
+        border-color: #3a3f54;
+    }
+
+    /* Validation Messages */
+    .products-module .text-danger {
+        color: #ff6b6b;
+    }
+
+    /* Specific Form Layout (e.g., Create/Edit Views) */
+    .products-module .product-form {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+        .products-module .product-form .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+    /* Additional adjustments for dark mode consistency */
+    .products-module a {
+        color: #0d47a1;
+    }
+
+        .products-module a:hover {
+            color: #0a3575;
+        }
