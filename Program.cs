@@ -1,11 +1,12 @@
 using erpv0._1.Controllers;
 using erpv0._1.Data;
+using erpv0._1.Models;
 using erpv0._1.Services;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Globalization;
-
+using AutoMapper;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddMemoryCache();
@@ -25,6 +26,7 @@ builder.Services.AddMvc()
     .AddViewLocalization()
     .AddDataAnnotationsLocalization();
 
+
 // Configure supported cultures
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
@@ -38,6 +40,7 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     options.SupportedCultures = supportedCultures;
     options.SupportedUICultures = supportedCultures;
 });
+
 
 var app = builder.Build();
 

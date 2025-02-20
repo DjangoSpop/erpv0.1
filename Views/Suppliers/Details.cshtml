@@ -1,0 +1,50 @@
+﻿<!-- Details.cshtml -->
+@model erpv0._1.Models.ViewModels.SupplierViewModel
+
+<div class="products-module" dir="rtl">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">تفاصيل المورد</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Name)</dt>
+                                <dd class="col-sm-8">@Model.Name</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.ContactName)</dt>
+                                <dd class="col-sm-8">@Model.ContactName</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.ContactEmail)</dt>
+                                <dd class="col-sm-8">@Model.ContactEmail</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.ContactPhone)</dt>
+                                <dd class="col-sm-8">@Model.ContactPhone</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.City)</dt>
+                                <dd class="col-sm-8">@Model.City</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Address)</dt>
+                                <dd class="col-sm-8">@Model.Address</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a asp-action="Edit" asp-route-id="@Model.SupplierId" class="btn btn-primary">
+                        <i class="bi bi-pencil"></i> تعديل
+                    </a>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-right"></i> عودة للقائمة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

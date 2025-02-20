@@ -1,0 +1,66 @@
+﻿@using erpv0._1.Models.ViewModels
+<!-- Index.cshtml -->
+@model IEnumerable<SupplierViewModel>
+
+<div class="products-module" dir="rtl">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">قائمة الموردين</h5>
+                    <a asp-action="Create" class="btn btn-light">
+                        <i class="bi bi-plus-lg"></i> إضافة مورد جديد
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>@Html.DisplayNameFor(model => model.Name)</th>
+                                    <th>@Html.DisplayNameFor(model => model.ContactName)</th>
+                                    <th>@Html.DisplayNameFor(model => model.ContactPhone)</th>
+                                    <th>@Html.DisplayNameFor(model => model.City)</th>
+                                    <th>@Html.DisplayNameFor(model => model.InvoiceCount)</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>@Html.DisplayFor(modelItem => item.Name)</td>
+                                        <td>@Html.DisplayFor(modelItem => item.ContactName)</td>
+                                        <td>@Html.DisplayFor(modelItem => item.ContactPhone)</td>
+                                        <td>@Html.DisplayFor(modelItem => item.City)</td>
+                                        <td>
+                                            <span class="badge bg-info">@item.InvoiceCount</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a asp-action="Edit" asp-route-id="@item.SupplierId" 
+                                                   class="btn btn-sm btn-outline-primary" title="تعديل">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <a asp-action="Details" asp-route-id="@item.SupplierId"
+                                                   class="btn btn-sm btn-outline-info" title="تفاصيل">
+                                                    <i class="bi bi-info-circle"></i>
+                                                </a>
+                                                <a asp-action="Delete" asp-route-id="@item.SupplierId"
+                                                   class="btn btn-sm btn-outline-danger" title="حذف">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+

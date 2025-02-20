@@ -1,0 +1,23 @@
+﻿@model erpv0._1.Models.ViewModels.CustomerArabicViewModel
+
+@{
+    ViewData["Title"] = "تفاصيل العميل";
+}
+
+<div class="container">
+    <div class="card shadow-lg mt-4">   
+        <div class="card-header bg-primary text-white">
+            <h3 class="text-center">تفاصيل العميل</h3>
+        </div>
+        <div class="card-body">
+            <p><strong>الاسم الكامل:</strong> @Model.FullName</p>
+            <p><strong>رقم الهاتف:</strong> @Model.Phone</p>
+            <p><strong>البريد الإلكتروني:</strong> @Model.Email</p>
+            <p><strong>العنوان:</strong> @Model.Address</p>
+        </div>
+        <div class="card-footer text-center">
+            <a asp-action="Edit" asp-route-id="@Model.CustomerId" class="btn btn-warning">تعديل</a>
+            <a asp-action="Index" class="btn btn-secondary">رجوع للقائمة</a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,68 @@
+﻿<!-- Delete.cshtml -->
+@model erpv0._1.Models.ViewModels.SupplierViewModel
+
+<div class="container-fluid py-4" dir="rtl">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">تأكيد حذف المورد</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        هل أنت متأكد من حذف هذا المورد؟ هذا الإجراء لا يمكن التراجع عنه.
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Name)</dt>
+                                <dd class="col-sm-8">@Model.Name</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.ContactName)</dt>
+                                <dd class="col-sm-8">@Model.ContactName</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.ContactEmail)</dt>
+                                <dd class="col-sm-8">@Model.ContactEmail</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.City)</dt>
+                                <dd class="col-sm-8">@Model.City</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Address)</dt>
+                                <dd class="col-sm-8">@Model.Address</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.InvoiceCount)</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge bg-info">@Model.InvoiceCount</span>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    @if (Model.InvoiceCount > 0)
+                    {
+                        <div class="alert alert-danger mt-3">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            تنبيه: هذا المورد لديه @Model.InvoiceCount فواتير مرتبطة به. حذف المورد سيؤثر على هذه البيانات.
+                        </div>
+                    }
+                </div>
+                <div class="card-footer">
+                    <form asp-action="Delete">
+                        <input type="hidden" asp-for="SupplierId" />
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> تأكيد الحذف
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-right"></i> إلغاء
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
