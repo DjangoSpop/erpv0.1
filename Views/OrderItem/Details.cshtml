@@ -1,0 +1,114 @@
+﻿@model erpv0._1.Models.ViewModels.OrderItemViewModel
+
+@{
+    ViewData["Title"] = "تفاصيل عنصر الطلب";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-info text-white">
+            <h1 class="h3 mb-0">تفاصيل عنصر الطلب</h1>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">معلومات الطلب</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.OrderId)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.OrderId)</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.ItemId)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.ItemId)</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">معلومات المنتج</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.ProductId)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.ProductId)</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.ProductName)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.ProductName)</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">معلومات التسعير والكمية</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="card bg-light mb-3">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title">@Html.DisplayNameFor(model => model.Quantity)</h6>
+                                            <p class="card-text h3">@Html.DisplayFor(model => model.Quantity)</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="card bg-light mb-3">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title">@Html.DisplayNameFor(model => model.ListPrice)</h6>
+                                            <p class="card-text h3">@Html.DisplayFor(model => model.ListPrice)</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="card bg-light mb-3">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title">@Html.DisplayNameFor(model => model.Discount)</h6>
+                                            <p class="card-text h3">@Html.DisplayFor(model => model.Discount)</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="card bg-success text-white mb-3">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title">@Html.DisplayNameFor(model => model.TotalAmount)</h6>
+                                            <p class="card-text h3">@Html.DisplayFor(model => model.TotalAmount)</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-3">
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> العودة للقائمة
+                </a>
+                <div>
+                    <a asp-action="Edit" asp-route-orderId="@Model.OrderId" asp-route-itemId="@Model.ItemId" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> تعديل
+                    </a>
+                    <a asp-action="Delete" asp-route-orderId="@Model.OrderId" asp-route-itemId="@Model.ItemId" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> حذف
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

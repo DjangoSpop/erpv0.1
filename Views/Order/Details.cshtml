@@ -1,0 +1,193 @@
+﻿@model erpv0._1.Models.ViewModels.OrderViewModel
+
+@{
+    ViewData["Title"] = "تفاصيل الطلب";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var orderItems = ViewBag.OrderItems as List<erpv0._1.Models.ViewModels.OrderItemViewModel>;
+}
+
+<div class="container-fluid mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-0">تفاصيل الطلب رقم: @Model.OrderId</h1>
+                <p class="mb-0 text-white-50">تاريخ الطلب: @Model.OrderDate.ToString("yyyy-MM-dd")</p>
+            </div>
+            <div>
+                <a asp-action="Edit" asp-route-id="@Model.OrderId" class="btn btn-warning">
+                    <i class="fas fa-edit"></i> تعديل
+                </a>
+                <a asp-controller="OrderItem" asp-action="ByOrder" asp-route-orderId="@Model.OrderId" class="btn btn-light">
+                    <i class="fas fa-list"></i> عناصر الطلب
+                </a>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> العودة للقائمة
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Order Information -->
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-info-circle"></i> معلومات الطلب</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.OrderId)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.OrderId)</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.OrderStatusName)</dt>
+                                <dd class="col-sm-8">
+                                    @{
+                                        var badgeClass = Model.OrderStatus switch
+                                        {
+                                            1 => "bg-secondary",
+                                            2 => "bg-warning text-dark",
+                                            3 => "bg-info",
+                                            4 => "bg-success",
+                                            5 => "bg-danger",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @badgeClass">@Model.OrderStatusName</span>
+                                </dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.OrderDate)</dt>
+                                <dd class="col-sm-8">@Model.OrderDate.ToString("yyyy-MM-dd")</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.RequiredDate)</dt>
+                                <dd class="col-sm-8">@Model.RequiredDate.ToString("yyyy-MM-dd")</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.ShippedDate)</dt>
+                                <dd class="col-sm-8">
+                                    @if (Model.ShippedDate.HasValue)
+                                    {
+                                        @Model.ShippedDate.Value.ToString("yyyy-MM-dd")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">لم يتم الشحن بعد</span>
+                                    }
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer and Store Information -->
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-user"></i> معلومات العميل والمتجر</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.CustomerName)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.CustomerName)</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.StoreName)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.StoreName)</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.StaffName)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.StaffName)</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-calculator"></i> ملخص الطلب</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card bg-light mb-3">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">عدد العناصر</h6>
+                                    <p class="display-6">@Model.ItemCount</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card bg-light mb-3">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">إجمالي الكمية</h6>
+                                    <p class="display-6">@(orderItems?.Sum(oi => oi.Quantity) ?? 0)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white mb-3">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">القيمة الإجمالية</h6>
+                                    <p class="display-6">@Model.TotalAmount.ToString("C")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Items Table -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> عناصر الطلب</h5>
+                </div>
+                <div class="card-body">
+                    @if (orderItems != null && orderItems.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>المنتج</th>
+                                        <th>الكمية</th>
+                                        <th>السعر</th>
+                                        <th>الخصم</th>
+                                        <th>المجموع</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in orderItems)
+                                    {
+                                        <tr>
+                                            <td>@item.ItemId</td>
+                                            <td>@item.ProductName</td>
+                                            <td>@item.Quantity</td>
+                                            <td>@item.ListPrice.ToString("C")</td>
+                                            <td>@item.Discount.ToString("C")</td>
+                                            <td>@item.TotalAmount.ToString("C")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-primary fw-bold">
+                                        <td colspan="2">المجموع</td>
+                                        <td>@orderItems.Sum(oi => oi.Quantity)</td>
+                                        <td colspan="2"></td>
+                                        <td>@orderItems.Sum(oi => oi.TotalAmount).ToString("C")</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> لا توجد عناصر في هذا الطلب.
+                            <a asp-controller="OrderItem" asp-action="Create" asp-route-orderId="@Model.OrderId" class="alert-link">أضف عنصراً جديداً</a>.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

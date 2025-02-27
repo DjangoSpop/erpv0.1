@@ -10,10 +10,10 @@
         {
             public ProductViewModel()
             {
-                Name = string.Empty;
-                SKU = string.Empty;
-                Barcode = string.Empty;
-                QRCode = string.Empty;
+                    Name = string.Empty;
+                    SKU = string.Empty;
+                    Barcode = string.Empty;
+                    QRCode = string.Empty;
             }
 
             public int Id { get; set; }

@@ -1,0 +1,105 @@
+﻿@model erpv0._1.Models.ViewModels.InvoiceViewModel
+
+@{
+    ViewData["Title"] = "تعديل الفاتورة";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-warning text-dark">
+            <h1 class="h3 mb-0">تعديل الفاتورة رقم @Model.InvoiceNo</h1>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                <input type="hidden" asp-for="InvoiceNo" />
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="SupplierId" class="control-label fw-bold"></label>
+                            <select asp-for="SupplierId" class="form-select" asp-items="ViewBag.Suppliers">
+                                <option value="">-- اختر المورد --</option>
+                            </select>
+                            <span asp-validation-for="SupplierId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="OrderId" class="control-label fw-bold"></label>
+                            <select asp-for="OrderId" class="form-select" asp-items="ViewBag.Orders">
+                                <option value="">-- اختر الطلب --</option>
+                            </select>
+                            <span asp-validation-for="OrderId" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="InvoiceDate" class="control-label fw-bold"></label>
+                            <input asp-for="InvoiceDate" class="form-control" type="date" />
+                            <span asp-validation-for="InvoiceDate" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="TotalAmount" class="control-label fw-bold"></label>
+                            <input asp-for="TotalAmount" class="form-control" type="number" step="0.01" min="0" />
+                            <span asp-validation-for="TotalAmount" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Notes" class="control-label fw-bold"></label>
+                    <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Notes" class="text-danger"></span>
+                </div>
+
+                <div class="form-group my-4 d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> العودة للقائمة
+                    </a>
+                    <div>
+                        <a asp-controller="Payment" asp-action="ByInvoice" asp-route-invoiceNo="@Model.InvoiceNo" class="btn btn-primary">
+                            <i class="fas fa-money-bill"></i> إدارة المدفوعات
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save"></i> حفظ التغييرات
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(document).ready(function() {
+            // Populate amount from order if available
+            $("#OrderId").change(function() {
+                const orderId = $(this).val();
+                if(orderId) {
+                    $.ajax({
+                        url: '/Invoice/GetOrderTotal/' + orderId,
+                        type: 'GET',
+                        success: function(data) {
+                            if(data.success) {
+                                $("#TotalAmount").val(data.total);
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}

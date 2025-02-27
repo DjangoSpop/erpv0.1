@@ -1,0 +1,175 @@
+﻿@model IEnumerable<erpv0._1.Models.ViewModels.OrderViewModel>
+
+@{
+    ViewData["Title"] = "الطلبات";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // Calculate counts here
+    var totalOrders = Model.Count();
+    var ordersInProgress = Model.Count(o => o.OrderStatus == 2);
+    var deliveredOrders = Model.Count(o => o.OrderStatus == 4);
+    var totalSales = Model.Sum(o => o.TotalAmount);
+}
+
+<div class="container-fluid mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0">الطلبات</h1>
+            <a asp-action="Create" class="btn btn-light">
+                <i class="fas fa-plus"></i> إضافة طلب جديد
+            </a>
+        </div>
+        <div class="card-body">
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-primary shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        إجمالي الطلبات
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">@totalOrders</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                        طلبات قيد المعالجة
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">@ordersInProgress</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-spinner fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        طلبات تم تسليمها
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">@deliveredOrders</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-danger shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                        إجمالي المبيعات
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">@totalSales.ToString("C")</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="table-responsive">
+                <table class="table table-hover table-striped" id="dataTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model.OrderId)</th>
+                            <th>@Html.DisplayNameFor(model => model.CustomerName)</th>
+                            <th>@Html.DisplayNameFor(model => model.OrderDate)</th>
+                            <th>@Html.DisplayNameFor(model => model.RequiredDate)</th>
+                            <th>@Html.DisplayNameFor(model => model.OrderStatusName)</th>
+                            <th>@Html.DisplayNameFor(model => model.StoreName)</th>
+                            <th>@Html.DisplayNameFor(model => model.ItemCount)</th>
+                            <th>@Html.DisplayNameFor(model => model.TotalAmount)</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@Html.DisplayFor(modelItem => item.OrderId)</td>
+                                <td>@Html.DisplayFor(modelItem => item.CustomerName)</td>
+                                <td>@item.OrderDate.ToString("yyyy-MM-dd")</td>
+                                <td>@item.RequiredDate.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    @{
+                                        var badgeClass = item.OrderStatus switch
+                                        {
+                                            1 => "bg-secondary",
+                                            2 => "bg-warning text-dark",
+                                            3 => "bg-info",
+                                            4 => "bg-success",
+                                            5 => "bg-danger",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @badgeClass">@item.OrderStatusName</span>
+                                </td>
+                                <td>@Html.DisplayFor(modelItem => item.StoreName)</td>
+                                <td>@Html.DisplayFor(modelItem => item.ItemCount)</td>
+                                <td>@Html.DisplayFor(modelItem => item.TotalAmount)</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a asp-action="Edit" asp-route-id="@item.OrderId" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a asp-action="Details" asp-route-id="@item.OrderId" class="btn btn-sm btn-info">
+                                            <i class="fas fa-info-circle"></i>
+                                        </a>
+                                        <a asp-controller="OrderItem" asp-action="ByOrder" asp-route-orderId="@item.OrderId" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-list"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.OrderId" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#dataTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Arabic.json"
+                },
+                "order": [[0, "desc"]]
+            });
+        });
+    </script>
+}

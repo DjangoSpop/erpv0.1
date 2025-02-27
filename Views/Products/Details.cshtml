@@ -3,42 +3,601 @@
     ViewData["Title"] = "تفاصيل المنتج";
 }
 
-<div class="products-module">
-    <h1 class="mb-4">تفاصيل المنتج</h1>
+<div class="container-fluid px-4" dir="rtl">
     <div class="row">
-        <div class="col-md-6">
-            <p><strong>اسم المنتج:</strong> @Model.ProductName</p>
-            <p><strong>العلامة التجارية:</strong> @Model.Brand?.BrandId</p>
-        </div>
-        <div class="col-md-6">
-            <p><strong>الفئة:</strong> @Model.Category?.Name</p>
-            <p><strong>السعر:</strong> @Model.ListPrice.ToString("C")</p>
-        </div>  
-    </div>
+        <div class="col-lg-12">
+            <!-- Product Header -->
+            <div class="card bg-dark text-white shadow-sm border-0 mb-4 rounded-4">
+                <div class="card-body d-flex justify-content-between align-items-center p-4">
+                    <div>
+                        <h2 class="mb-1">@Model.ProductName</h2>
+                        <div class="text-secondary">رمز المنتج: #@Model.ProductId</div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="@Url.Action("Edit", new { id = Model.ProductId })" class="btn btn-warning">
+                            <i class="bi bi-pencil me-1"></i>تعديل
+                        </a>
+                        <a href="@Url.Action("Index")" class="btn btn-outline-light">
+                            <i class="bi bi-arrow-right me-1"></i>عودة للقائمة
+                        </a>
+                    </div>
+                </div>
+            </div>
 
-    <h2 class="mt-5">تفاصيل إضافية</h2>
-    <ul class="nav nav-tabs" id="productTabs" role="tablist">
-        <li class="nav-item">
-            <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab" aria-controls="details" aria-selected="true">التفاصيل</button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link" id="variants-tab" data-bs-toggle="tab" data-bs-target="#variants" type="button" role="tab" aria-controls="variants" aria-selected="false">المتغيرات</button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link" id="price-tab" data-bs-toggle="tab" data-bs-target="#price" type="button" role="tab" aria-controls="price" aria-selected="false">سجل الأسعار</button>
-        </li>
-    </ul>
-    <div class="tab-content" id="productTabsContent">
-        <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
-            <p>تفاصيل المنتج هنا...</p>
-        </div>
-        <div class="tab-pane fade" id="variants" role="tabpanel" aria-labelledby="variants-tab">
-            <p>المتغيرات هنا...</p>
-        </div>
-        <div class="tab-pane fade" id="price" role="tabpanel" aria-labelledby="price-tab">
-            <p>سجل الأسعار هنا...</p>
+            <!-- Product Content -->
+            <div class="card bg-dark text-white shadow-sm border-0 rounded-4">
+                <div class="card-header bg-transparent border-0 p-3">
+                    <ul class="nav nav-tabs card-header-tabs" id="productTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="info-tab" data-bs-toggle="tab"
+                                    data-bs-target="#info" type="button" role="tab" aria-selected="true">
+                                <i class="bi bi-info-circle me-1"></i>المعلومات الأساسية
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="price-history-tab" data-bs-toggle="tab"
+                                    data-bs-target="#price-history" type="button" role="tab" aria-selected="false">
+                                <i class="bi bi-graph-up me-1"></i>تاريخ الأسعار
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="stock-tab" data-bs-toggle="tab"
+                                    data-bs-target="#stock" type="button" role="tab" aria-selected="false">
+                                <i class="bi bi-box-seam me-1"></i>المخزون
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="codes-tab" data-bs-toggle="tab"
+                                    data-bs-target="#codes" type="button" role="tab" aria-selected="false">
+                                <i class="bi bi-upc-scan me-1"></i>الرموز
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card-body p-4">
+                    <div class="tab-content" id="productTabContent">
+                        <!-- Basic Info Tab -->
+                        <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab">
+                            <div class="row g-4">
+                                <!-- Product Summary Card -->
+                                <div class="col-md-4">
+                                    <div class="card bg-secondary bg-opacity-10 border-0 h-100 rounded-4">
+                                        <div class="card-body p-4">
+                                            <h5 class="card-title border-bottom pb-2">ملخص المنتج</h5>
+                                            <dl class="row mb-0">
+                                                <dt class="col-sm-5">الاسم:</dt>
+                                                <dd class="col-sm-7">@Model.ProductName</dd>
+
+                                                <dt class="col-sm-5">العلامة التجارية:</dt>
+                                                <dd class="col-sm-7">@Model.Brand.BrandName</dd>
+
+                                                <dt class="col-sm-5">الفئة:</dt>
+                                                <dd class="col-sm-7">@(Model.Category?.Name ?? "غير مصنف")</dd>
+
+                                                <dt class="col-sm-5">سنة الموديل:</dt>
+                                                <dd class="col-sm-7">@Model.ModelYear</dd>
+
+                                                <dt class="col-sm-5">السعر:</dt>
+                                                <dd class="col-sm-7">@Model.ListPrice.ToString("C")</dd>
+
+                                                <dt class="col-sm-5">المخزون:</dt>
+                                                <dd class="col-sm-7">
+                                                    @{
+                                                        var stockQuantity = Model.StockEntries.Sum(se => se.Quantity);
+                                                        var stockClass = stockQuantity > 10 ? "text-success" : (stockQuantity > 0 ? "text-warning" : "text-danger");
+                                                    }
+                                                    <span class="@stockClass">@stockQuantity</span>
+                                                </dd>
+                                            </dl>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Product Image Card -->
+                                <div class="col-md-4">
+                                    <div class="card bg-secondary bg-opacity-10 border-0 h-100 rounded-4">
+                                        <div class="card-body p-4 text-center">
+                                            <h5 class="card-title border-bottom pb-2">صورة المنتج</h5>
+                                            <div class="product-image-container mt-3">
+                                                @if (Model.ImageData != null)
+                                                {
+                                                    <img src="@Url.Action("GetProductImage", new { id = Model.ProductId })"
+                                                         alt="@Model.ProductName"
+                                                         class="img-fluid rounded"
+                                                         style="max-height: 200px; max-width: 100%;">
+                                                }
+                                                else
+                                                {
+                                                    <div class="no-image-placeholder bg-dark d-flex flex-column align-items-center justify-content-center p-4 rounded" style="height: 200px;">
+                                                        <i class="bi bi-image text-secondary mb-2" style="font-size: 3rem;"></i>
+                                                        <span class="text-secondary">لا توجد صورة</span>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- System Info Card -->
+                                <div class="col-md-4">
+                                    <div class="card bg-secondary bg-opacity-10 border-0 h-100 rounded-4">
+                                        <div class="card-body p-4">
+                                            <h5 class="card-title border-bottom pb-2">معلومات النظام</h5>
+                                            <dl class="row mb-0">
+                                                <dt class="col-sm-5">تاريخ الإنشاء:</dt>
+                                                <dd class="col-sm-7">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+
+                                                <dt class="col-sm-5">بواسطة:</dt>
+                                                <dd class="col-sm-7">@Model.CreatedBy</dd>
+
+                                                @if (Model.UpdatedAt.HasValue)
+                                                {
+                                                    <dt class="col-sm-5">آخر تحديث:</dt>
+                                                    <dd class="col-sm-7">@Model.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm")</dd>
+
+                                                    <dt class="col-sm-5">المحدث:</dt>
+                                                    <dd class="col-sm-7">@Model.UpdatedBy</dd>
+                                                }
+                                            </dl>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Price History Tab -->
+                        <div class="tab-pane fade" id="price-history" role="tabpanel" aria-labelledby="price-history-tab">
+                            @if (Model.PriceHistories.Any())
+                            {
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="mb-0">تاريخ تغييرات السعر</h5>
+                                    <button class="btn btn-sm btn-outline-info" id="showPriceChart">
+                                        <i class="bi bi-graph-up me-1"></i>عرض المخطط
+                                    </button>
+                                </div>
+
+                                <div id="priceChart" class="mb-4 d-none">
+                                    <div class="card bg-secondary bg-opacity-10 border-0 rounded-4 p-3 mb-4">
+                                        <canvas id="priceHistoryChart" height="200"></canvas>
+                                    </div>
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table class="table table-dark table-striped align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>التاريخ</th>
+                                                <th>السعر السابق</th>
+                                                <th>السعر الجديد</th>
+                                                <th>التغيير</th>
+                                                <th>سبب التغيير</th>
+                                                <th>المستخدم</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var priceHistory in Model.PriceHistories.OrderByDescending(ph => ph.CreatedAt))
+                                            {
+                                                <tr>
+                                                    <td>@priceHistory.EffectiveDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                                    <td>@priceHistory.CostPrice.ToString("C")</td>
+                                                    <td>@priceHistory.SellingPrice.ToString("C")</td>
+                                                    <td>
+                                                        @{
+                                                            var change = priceHistory.CostPrice - priceHistory.SellingPrice;
+                                                            var changePercent = priceHistory.SellingPrice > 0
+                                                            ? (change / priceHistory.CostPrice) * 100
+                                                            : 0;
+                                                            var changeClass = change >= 0 ? "text-success" : "text-danger";
+                                                            var changeIcon = change >= 0 ? "bi-arrow-up" : "bi-arrow-down";
+                                                        }
+                                                        <span class="@changeClass">
+                                                            <i class="bi @changeIcon me-1"></i>
+                                                            @Math.Abs(changePercent).ToString("0.00")%
+                                                        </span>
+                                                    </td>
+                                                    <td>@priceHistory.Reason</td>
+                                                   
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="card bg-secondary bg-opacity-10 border-0 rounded-4 p-4 text-center">
+                                    <i class="bi bi-info-circle text-info mb-3" style="font-size: 2rem;"></i>
+                                    <h5>لا توجد سجلات للأسعار السابقة</h5>
+                                    <p class="text-secondary mb-0">لم يتم تغيير سعر هذا المنتج بعد.</p>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Stock Movement Tab -->
+                        <div class="tab-pane fade" id="stock" role="tabpanel" aria-labelledby="stock-tab">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">حركات المخزون</h5>
+                                <button class="btn btn-sm btn-outline-info" id="showStockChart">
+                                    <i class="bi bi-bar-chart me-1"></i>عرض المخطط
+                                </button>
+                            </div>
+
+                            <div id="stockChart" class="mb-4 d-none">
+                                <div class="card bg-secondary bg-opacity-10 border-0 rounded-4 p-3 mb-4">
+                                    <canvas id="stockMovementChart" height="200"></canvas>
+                                </div>
+                            </div>
+
+                            @if (Model.StockEntries.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-dark table-striped align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>رقم الدفعة</th>
+                                                <th>المستودع</th>
+                                                <th>الكمية</th>
+                                                <th>سعر التكلفة</th>
+                                                <th>سعر البيع</th>
+                                                <th>تاريخ الاستلام</th>
+                                                <th>الإجراءات</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var entry in Model.StockEntries.OrderByDescending(se => se.ReceiptDate))
+                                            {
+                                                <tr>
+                                                    <td>@entry.BatchNumber</td>
+                                                    <td>@entry.Warehouse.Name</td>
+                                                    <td>
+                                                        <span class="@(entry.Quantity > 0 ? "text-success" : "text-danger")">
+                                                            @entry.Quantity
+                                                        </span>
+                                                    </td>
+                                                    <td>@entry.CostPrice.ToString("C")</td>
+                                                    <td>@entry.SellingPrice.ToString("C")</td>
+                                                    <td>@entry.ReceiptDate.ToString("yyyy-MM-dd")</td>
+                                                    <td>
+                                                        <a href="@Url.Action("Details", "StockEntries", new { id = entry.EntryId })"
+                                                           class="btn btn-sm btn-outline-info">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="card bg-secondary bg-opacity-10 border-0 rounded-4 p-4 text-center">
+                                    <i class="bi bi-inbox text-warning mb-3" style="font-size: 2rem;"></i>
+                                    <h5>لا توجد حركات مخزون</h5>
+                                    <p class="text-secondary mb-0">لم يتم تسجيل أي حركات مخزون لهذا المنتج بعد.</p>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Codes Tab -->
+                        <div class="tab-pane fade" id="codes" role="tabpanel" aria-labelledby="codes-tab">
+                            <div class="row g-4">
+                                <!-- QR Code -->
+                                <div class="col-md-6">
+                                    <div class="card bg-secondary bg-opacity-10 border-0 h-100 rounded-4">
+                                        <div class="card-body p-4 text-center">
+                                            <h5 class="card-title border-bottom pb-2">رمز QR</h5>
+                                            <div class="qr-code-container mt-3">
+                                                <img src="@Url.Action("GetProductQRCode", new { id = Model.ProductId })"
+                                                     alt="QR Code"
+                                                     class="img-fluid rounded mb-3"
+                                                     style="max-height: 200px;">
+                                                <div>
+                                                    <a href="@Url.Action("GetProductQRCode", new { id = Model.ProductId })"
+                                                       class="btn btn-sm btn-outline-light"
+                                                       download="qrcode_@Model.ProductId.ToString()">
+                                                        <i class="bi bi-download me-1"></i>تحميل
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-primary print-code" data-type="qr">
+                                                        <i class="bi bi-printer me-1"></i>طباعة
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Barcode -->
+                                <div class="col-md-6">
+                                    <div class="card bg-secondary bg-opacity-10 border-0 h-100 rounded-4">
+                                        <div class="card-body p-4 text-center">
+                                            <h5 class="card-title border-bottom pb-2">الباركود</h5>
+                                            <div class="barcode-container mt-3">
+                                                <img src="@Url.Action("GetProductBarcode", new { id = Model.ProductId })"
+                                                     alt="Barcode"
+                                                     class="img-fluid rounded mb-3"
+                                                     style="max-height: 200px;">
+                                                <div>
+                                                    <a href="@Url.Action("GetProductBarcode", new { id = Model.ProductId })"
+                                                       class="btn btn-sm btn-outline-light"
+                                                       download="barcode_@Model.ProductId.ToString()">
+                                                        <i class="bi bi-download me-1"></i>تحميل
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-primary print-code" data-type="barcode">
+                                                        <i class="bi bi-printer me-1"></i>طباعة
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <a href="@Url.Action("Index", "Products")" class="btn btn-secondary mt-3">رجوع</a>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Bootstrap tabs
+            var productTabs = document.querySelectorAll('#productTabs .nav-link')
+            productTabs.forEach(function(tab) {
+                tab.addEventListener('shown.bs.tab', function (event) {
+                    // Optional: Add any custom tab switching logic here
+                    console.log('Tab switched:', event.target.id);
+                })
+            });
+
+            // Price History Chart
+            document.getElementById('showPriceChart').addEventListener('click', function() {
+                const chartContainer = document.getElementById('priceChart');
+                chartContainer.classList.toggle('d-none');
+
+                if (!chartContainer.classList.contains('d-none') && !window.priceChart) {
+                    initializePriceChart();
+                }
+            });
+
+            // Stock Movement Chart
+            document.getElementById('showStockChart').addEventListener('click', function() {
+                const chartContainer = document.getElementById('stockChart');
+                chartContainer.classList.toggle('d-none');
+
+                if (!chartContainer.classList.contains('d-none') && !window.stockChart) {
+                    initializeStockChart();
+                }
+            });
+
+            function initializePriceChart() {
+                const ctx = document.getElementById('priceHistoryChart').getContext('2d');
+
+                // Extract data from price history
+                const priceData = @Html.Raw(Json.Serialize(Model.PriceHistories.OrderBy(p => p.EffectiveDate).Select(p => new
+            {
+                date = p.EffectiveDate.ToString("yyyy-MM-dd"),
+                price = p.SellingPrice
+            })));
+
+                window.priceChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: priceData.map(item => item.date),
+                        datasets: [{
+                            label: 'سعر المنتج',
+                            data: priceData.map(item => item.price),
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 2,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    color: 'white'
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    color: 'rgba(255, 255, 255, 0.7)'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            y: {
+                                ticks: {
+                                    color: 'rgba(255, 255, 255, 0.7)'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function initializeStockChart() {
+                const ctx = document.getElementById('stockMovementChart').getContext('2d');
+
+                // Extract data from stock entries - for example purposes
+                const stockData = @Html.Raw(Json.Serialize(Model.StockEntries
+                .OrderBy(se => se.ReceiptDate)
+                .Select(se => new
+                {
+                    date = se.ReceiptDate.ToString("yyyy-MM-dd"),
+                    quantity = se.Quantity
+                })));
+
+                // Calculate cumulative quantity
+                let cumulativeQuantity = 0;
+                const stockLevels = stockData.map(item => {
+                    cumulativeQuantity += item.quantity;
+                    return {
+                        date: item.date,
+                        level: cumulativeQuantity
+                    };
+                });
+
+                window.stockChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: stockData.map(item => item.date),
+                        datasets: [
+                            {
+                                label: 'كمية المخزون',
+                                data: stockLevels.map(item => item.level),
+                                type: 'line',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 2,
+                                fill: false,
+                                tension: 0.4,
+                                order: 0
+                            },
+                            {
+                                label: 'حركة المخزون',
+                                data: stockData.map(item => item.quantity),
+                                backgroundColor: function(context) {
+                                    const value = context.dataset.data[context.dataIndex];
+                                    return value < 0
+                                        ? 'rgba(255, 99, 132, 0.7)'
+                                        : 'rgba(75, 192, 192, 0.7)';
+                                },
+                                order: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    color: 'white'
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    color: 'rgba(255, 255, 255, 0.7)'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            y: {
+                                ticks: {
+                                    color: 'rgba(255, 255, 255, 0.7)'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Print Barcode/QR Code functionality
+            document.querySelectorAll('.print-code').forEach(button => {
+                button.addEventListener('click', function() {
+                    const type = this.dataset.type;
+                    const imgSrc = type === 'qr'
+                        ? '@Url.Action("GetProductQRCode", new { id = Model.ProductId })'
+                        : '@Url.Action("GetProductBarcode", new { id = Model.ProductId })';
+
+                    const printWindow = window.open('', '', 'height=500,width=800');
+                    printWindow.document.write('<html><head><title>Print Code</title>');
+                    printWindow.document.write('<style>body { font-family: Arial; text-align: center; } .product-info { margin-bottom: 20px; } </style>');
+                    printWindow.document.write('</head><body>');
+                    printWindow.document.write('<div class="product-info">');
+                    printWindow.document.write('<h2>@Model.ProductName</h2>');
+                    printWindow.document.write('<p>رمز المنتج: #@Model.ProductId</p>');
+                    printWindow.document.write('<p>السعر: @Model.ListPrice.ToString("C")</p>');
+                    printWindow.document.write('</div>');
+                    printWindow.document.write(`<img src="${imgSrc}" style="max-width: 100%; max-height: 300px;">`);
+                    printWindow.document.write('</body></html>');
+                    printWindow.document.close();
+                    printWindow.focus();
+
+                    // Start printing after image has loaded
+                    setTimeout(() => {
+                        printWindow.print();
+                        printWindow.close();
+                    }, 500);
+                });
+            });
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .nav-tabs {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+            .nav-tabs .nav-link {
+                color: rgba(255, 255, 255, 0.7);
+                border: none;
+                padding: 0.75rem 1rem;
+                margin-right: 0.5rem;
+                border-radius: 0.5rem 0.5rem 0 0;
+            }
+
+                .nav-tabs .nav-link:hover {
+                    color: #fff;
+                    background-color: rgba(255, 255, 255, 0.05);
+                    border-color: transparent;
+                }
+
+                .nav-tabs .nav-link.active {
+                    color: #fff;
+                    background-color: rgba(255, 255, 255, 0.05);
+                    border-color: transparent;
+                    border-bottom: 2px solid #4e73df;
+                }
+
+        .tab-content {
+            padding-top: 1.5rem;
+        }
+
+        .table-dark {
+            --bs-table-bg: transparent;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .card {
+            overflow: hidden;
+        }
+
+        dl.row {
+            margin-bottom: 0;
+        }
+
+        dt {
+            font-weight: normal;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        dd {
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+        }
+    </style>
+}

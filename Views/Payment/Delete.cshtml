@@ -1,0 +1,106 @@
+﻿@model erpv0._1.Models.Payment
+
+@{
+    ViewData["Title"] = "إضافة دفعة جديدة";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var invoiceNo = ViewBag.InvoiceNo;
+    var remainingAmount = ViewBag.RemainingAmount;
+}
+
+<div class="container-fluid mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h1 class="h3 mb-0">إضافة دفعة جديدة للفاتورة رقم: @invoiceNo</h1>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-info-circle fa-2x me-3"></i>
+                    <div>
+                        <h5 class="alert-heading mb-1">معلومات المبلغ المتبقي</h5>
+                        <p class="mb-0">المبلغ المتبقي من الفاتورة: <strong>@remainingAmount.ToString("C")</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                <input type="hidden" asp-for="InvoiceNo" value="@invoiceNo" />
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="PaymentDate" class="control-label fw-bold">تاريخ الدفع</label>
+                            <input asp-for="PaymentDate" class="form-control" type="date" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                            <span asp-validation-for="PaymentDate" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="Amount" class="control-label fw-bold">المبلغ</label>
+                            <input asp-for="Amount" class="form-control" type="number" step="0.01" min="0.01" value="@remainingAmount" />
+                            <span asp-validation-for="Amount" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="PaymentMethod" class="control-label fw-bold">طريقة الدفع</label>
+                            <select asp-for="PaymentMethod" class="form-select">
+                                <option value="">-- اختر طريقة الدفع --</option>
+                                @foreach (var method in ViewBag.PaymentMethods)
+                                {
+                                    <option value="@method.Value">@method.Text</option>
+                                }
+                            </select>
+                            <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="PaymentStatus" class="control-label fw-bold">حالة الدفع</label>
+                            <select asp-for="PaymentStatus" class="form-select">
+                                <option value="Pending">معلق</option>
+                                <option value="Completed">مكتمل</option>
+                                <option value="Rejected">مرفوض</option>
+                            </select>
+                            <span asp-validation-for="PaymentStatus" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Notes" class="control-label fw-bold">ملاحظات</label>
+                    <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Notes" class="text-danger"></span>
+                </div>
+
+                <div class="form-group my-4 d-flex justify-content-between">
+                    <a asp-action="ByInvoice" asp-route-invoiceNo="@invoiceNo" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> العودة لقائمة المدفوعات
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> حفظ الدفعة
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(document).ready(function() {
+            // Set min dates for date fields
+            const today = new Date().toISOString().split('T')[0];
+            $("#PaymentDate").prop('min', today);
+        });
+    </script>
+}

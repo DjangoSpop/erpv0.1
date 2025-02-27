@@ -1,0 +1,131 @@
+﻿@model erpv0._1.Models.ViewModels.OrderViewModel
+
+@{
+    ViewData["Title"] = "إنشاء طلب جديد";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h1 class="h3 mb-0">إنشاء طلب جديد</h1>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="CustomerId" class="control-label fw-bold"></label>
+                            <select asp-for="CustomerId" class="form-select" asp-items="ViewBag.Customers">
+                                <option value="">-- اختر العميل --</option>
+                            </select>
+                            <span asp-validation-for="CustomerId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="OrderStatus" class="control-label fw-bold"></label>
+                            <select asp-for="OrderStatus" class="form-select" asp-items="ViewBag.OrderStatuses"></select>
+                            <span asp-validation-for="OrderStatus" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label asp-for="OrderDate" class="control-label fw-bold"></label>
+                            <input asp-for="OrderDate" class="form-control" type="date" />
+                            <span asp-validation-for="OrderDate" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label asp-for="RequiredDate" class="control-label fw-bold"></label>
+                            <input asp-for="RequiredDate" class="form-control" type="date" />
+                            <span asp-validation-for="RequiredDate" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label asp-for="ShippedDate" class="control-label fw-bold"></label>
+                            <input asp-for="ShippedDate" class="form-control" type="date" />
+                            <span asp-validation-for="ShippedDate" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="StoreId" class="control-label fw-bold"></label>
+                            <select asp-for="StoreId" class="form-select" asp-items="ViewBag.Stores">
+                                <option value="">-- اختر المتجر --</option>
+                            </select>
+                            <span asp-validation-for="StoreId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="StaffId" class="control-label fw-bold"></label>
+                            <select asp-for="StaffId" class="form-select" asp-items="ViewBag.Staff">
+                                <option value="">-- اختر الموظف --</option>
+                            </select>
+                            <span asp-validation-for="StaffId" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group my-4 d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> العودة للقائمة
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> إنشاء الطلب
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(document).ready(function() {
+            // Set min dates for date fields
+            const today = new Date().toISOString().split('T')[0];
+            $("#OrderDate").prop('min', today);
+
+            // Set the RequiredDate min to OrderDate
+            $("#OrderDate").change(function() {
+                const orderDate = $(this).val();
+                $("#RequiredDate").prop('min', orderDate);
+
+                // If RequiredDate is before OrderDate, update it
+                if($("#RequiredDate").val() < orderDate) {
+                    $("#RequiredDate").val(orderDate);
+                }
+            });
+
+            // Only allow ShippedDate if status is 'Shipped' or 'Delivered'
+            $("#OrderStatus").change(function() {
+                const status = parseInt($(this).val());
+                if(status === 3 || status === 4) { // Shipped or Delivered
+                    $("#ShippedDate").prop('disabled', false);
+                } else {
+                    $("#ShippedDate").val('');
+                    $("#ShippedDate").prop('disabled', true);
+                }
+            }).trigger('change'); // Trigger on page load
+        });
+    </script>
+}

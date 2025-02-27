@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using erpv0._1.Data;
+﻿using erpv0._1.Data;
 using erpv0._1.Models;
 using erpv0._1.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;

@@ -18,14 +18,17 @@ namespace erpv0._1.Controllers
         // GET: Stocks
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.Stocks.Include(s => s.Product).Include(s => s.Store);
-            return View(await applicationDbContext.ToListAsync());
+            var stocks = await _context.Stocks
+                .Include(s => s.Product)
+                .Include(s => s.Store)
+                .ToListAsync();
+            return View(stocks);
         }
 
-        // GET: Stocks/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // GET: Stocks/Details?storeId=1&productId=2
+        public async Task<IActionResult> Details(int? storeId, int? productId)
         {
-            if (id == null)
+            if (storeId == null || productId == null)
             {
                 return NotFound();
             }
@@ -33,7 +36,7 @@ namespace erpv0._1.Controllers
             var stock = await _context.Stocks
                 .Include(s => s.Product)
                 .Include(s => s.Store)
-                .FirstOrDefaultAsync(m => m.StoreId == id);
+                .FirstOrDefaultAsync(s => s.StoreId == storeId && s.ProductId == productId);
             if (stock == null)
             {
                 return NotFound();
@@ -45,14 +48,12 @@ namespace erpv0._1.Controllers
         // GET: Stocks/Create
         public IActionResult Create()
         {
-            ViewData["ProductId"] = new SelectList(_context.Products, "ProductId", "ProductId");
-            ViewData["StoreId"] = new SelectList(_context.Stores, "StoreId", "StoreId");
+            ViewBag.ProductId = new SelectList(_context.Products, "ProductId", "ProductName");
+            ViewBag.StoreId = new SelectList(_context.Stores, "StoreId", "StoreName");
             return View();
         }
 
         // POST: Stocks/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("StoreId,ProductId,Quantity")] Stock stock)
@@ -63,37 +64,37 @@ namespace erpv0._1.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ProductId"] = new SelectList(_context.Products, "ProductId", "ProductId", stock.ProductId);
-            ViewData["StoreId"] = new SelectList(_context.Stores, "StoreId", "StoreId", stock.StoreId);
+            ViewBag.ProductId = new SelectList(_context.Products, "ProductId", "ProductName", stock.ProductId);
+            ViewBag.StoreId = new SelectList(_context.Stores, "StoreId", "StoreName", stock.StoreId);
             return View(stock);
         }
 
-        // GET: Stocks/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        // GET: Stocks/Edit?storeId=1&productId=2
+        public async Task<IActionResult> Edit(int? storeId, int? productId)
         {
-            if (id == null)
+            if (storeId == null || productId == null)
             {
                 return NotFound();
             }
 
-            var stock = await _context.Stocks.FindAsync(id);
+            var stock = await _context.Stocks
+                .FirstOrDefaultAsync(s => s.StoreId == storeId && s.ProductId == productId);
             if (stock == null)
             {
                 return NotFound();
             }
-            ViewData["ProductId"] = new SelectList(_context.Products, "ProductId", "ProductId", stock.ProductId);
-            ViewData["StoreId"] = new SelectList(_context.Stores, "StoreId", "StoreId", stock.StoreId);
+            ViewBag.ProductId = new SelectList(_context.Products, "ProductId", "ProductName", stock.ProductId);
+            ViewBag.StoreId = new SelectList(_context.Stores, "StoreId", "StoreName", stock.StoreId);
             return View(stock);
         }
 
-        // POST: Stocks/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Stocks/Edit?storeId=1&productId=2
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("StoreId,ProductId,Quantity")] Stock stock)
+        public async Task<IActionResult> Edit(int storeId, int productId, [Bind("StoreId,ProductId,Quantity")] Stock stock)
         {
-            if (id != stock.StoreId)
+            // Confirm both keys match the record being updated.
+            if (storeId != stock.StoreId || productId != stock.ProductId)
             {
                 return NotFound();
             }
@@ -107,7 +108,7 @@ namespace erpv0._1.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!StockExists(stock.StoreId))
+                    if (!StockExists(stock.StoreId, stock.ProductId))
                     {
                         return NotFound();
                     }
@@ -118,15 +119,15 @@ namespace erpv0._1.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ProductId"] = new SelectList(_context.Products, "ProductId", "ProductId", stock.ProductId);
-            ViewData["StoreId"] = new SelectList(_context.Stores, "StoreId", "StoreId", stock.StoreId);
+            ViewBag.ProductId = new SelectList(_context.Products, "ProductId", "ProductName", stock.ProductId);
+            ViewBag.StoreId = new SelectList(_context.Stores, "StoreId", "StoreName", stock.StoreId);
             return View(stock);
         }
 
-        // GET: Stocks/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        // GET: Stocks/Delete?storeId=1&productId=2
+        public async Task<IActionResult> Delete(int? storeId, int? productId)
         {
-            if (id == null)
+            if (storeId == null || productId == null)
             {
                 return NotFound();
             }
@@ -134,7 +135,7 @@ namespace erpv0._1.Controllers
             var stock = await _context.Stocks
                 .Include(s => s.Product)
                 .Include(s => s.Store)
-                .FirstOrDefaultAsync(m => m.StoreId == id);
+                .FirstOrDefaultAsync(s => s.StoreId == storeId && s.ProductId == productId);
             if (stock == null)
             {
                 return NotFound();
@@ -143,24 +144,24 @@ namespace erpv0._1.Controllers
             return View(stock);
         }
 
-        // POST: Stocks/Delete/5
+        // POST: Stocks/Delete?storeId=1&productId=2
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int storeId, int productId)
         {
-            var stock = await _context.Stocks.FindAsync(id);
+            var stock = await _context.Stocks
+                .FirstOrDefaultAsync(s => s.StoreId == storeId && s.ProductId == productId);
             if (stock != null)
             {
                 _context.Stocks.Remove(stock);
+                await _context.SaveChangesAsync();
             }
-
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool StockExists(int id)
+        private bool StockExists(int storeId, int productId)
         {
-            return _context.Stocks.Any(e => e.StoreId == id);
+            return _context.Stocks.Any(s => s.StoreId == storeId && s.ProductId == productId);
         }
     }
 }

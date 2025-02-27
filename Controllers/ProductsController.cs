@@ -1,177 +1,224 @@
-﻿using erpv0._1.Data;
+﻿using Microsoft.AspNetCore.Mvc;
 using erpv0._1.Models;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using erpv0._1.Data;
+using System.ComponentModel.DataAnnotations;
 
 namespace erpv0._1.Controllers
 {
     public class ProductsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<ProductsController> _logger;
 
-        public ProductsController(ApplicationDbContext context)
+        public ProductsController(ApplicationDbContext context, ILogger<ProductsController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: Products
         public async Task<IActionResult> Index()
         {
-            var products = _context.Products
-                .Include(p => p.Brand)
-                .Include(p => p.Category);
-            return View(await products.ToListAsync());
+            try
+            {
+                var products = await _context.Products
+                    .Include(p => p.Brand)
+                    .Include(p => p.Category)
+                    .ToListAsync();
+                return View(products);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading products");
+                TempData["Error"] = "حدث خطأ أثناء تحميل المنتجات";
+                return View(new List<Product>());
+            }
         }
 
         // GET: Products/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
-            {
                 return NotFound();
-            }
 
-            var product = await _context.Products
-                .Include(p => p.Brand)
-                .Include(p => p.Category)
-                .Include(p => p.PriceHistories)
-                .Include(p => p.ProductTranslations)
-                .Include(p => p.ProductVariants)
-                .Include(p => p.StockEntries)
-                .Include(p => p.StockMovements)
-                .Include(p => p.WarehouseTransfers)
-                .FirstOrDefaultAsync(m => m.ProductId == id);
-
-            if (product == null)
+            try
             {
-                return NotFound();
-            }
+                var product = await _context.Products
+                    .Include(p => p.Brand)
+                    .Include(p => p.Category)
+                    .FirstOrDefaultAsync(p => p.ProductId == id);
 
-            return View(product);
+                if (product == null)
+                    return NotFound();
+
+                return View(product);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading product details for ID {ProductId}", id);
+                TempData["Error"] = "حدث خطأ أثناء تحميل تفاصيل المنتج";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         // GET: Products/Create
         public IActionResult Create()
         {
-            var brands = _context.Brands.ToList();
-            var categories = _context.ProductCategories.ToList();
-            ViewData["BrandId"] = brands.Any()
-           ? new SelectList(brands, "BrandId", "BrandName")
-           : new SelectList(Enumerable.Empty<SelectListItem>());
-            ViewData["CategoryId"] = categories.Any()
-       ? new SelectList(categories, "CategoryId", "Name")
-       : new SelectList(Enumerable.Empty<SelectListItem>());
+            LoadViewBagData();
             return View();
         }
 
         // POST: Products/Create
         [HttpPost]
-        public async Task<IActionResult> Create([Bind("ProductId,ProductName,BrandId,ModelYear,ListPrice,CategoryId")] Product product)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Product product, IFormFile? productImage)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                _context.Add(product);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                LoadViewBagData();
+                return View(product);
             }
-            ViewData["BrandId"] = new SelectList(_context.Brands, "BrandId", "Name", product.BrandId);
-            ViewData["CategoryId"] = new SelectList(_context.ProductCategories, "CategoryId", "Name", product.CategoryId);
-            return View(product);
+
+            try
+            {
+                //if (productImage != null)
+                //{
+                //    using var ms = new MemoryStream();
+                //    await productImage.CopyToAsync(ms);
+                //    product.ImageData = ms.ToArray();
+                //    product.ImageContentType = productImage.ContentType;
+                //}
+
+                product.CreatedAt = DateTime.UtcNow;
+                _context.Products.Add(product);
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = "تم إضافة المنتج بنجاح";
+                return RedirectToAction(nameof(Details), new { id = product.ProductId });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating product {ProductName}", product.ProductName);
+                ModelState.AddModelError("", "حدث خطأ أثناء إضافة المنتج");
+                LoadViewBagData();
+                return View(product);
+            }
         }
 
         // GET: Products/Edit/5
-        public IActionResult Edit(int? id)
+        public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null) return NotFound();
+            if (id == null)
+                return NotFound();
 
-            var product = _context.Products.Find(id);
-            if (product == null) return NotFound();
+            try
+            {
+                var product = await _context.Products.FindAsync(id);
+                if (product == null)
+                    return NotFound();
 
-            var brands = _context.Brands.ToList();
-            var categories = _context.ProductCategories.ToList();
-            ViewData["BrandId"] = brands.Any()
-                ? new SelectList(brands, "BrandId", "BrandName", product.BrandId)
-                : new SelectList(Enumerable.Empty<SelectListItem>());
-
-            ViewData["CategoryId"] = categories.Any()
-                ? new SelectList(categories, "CategoryId", "Name", product.CategoryId)
-                : new SelectList(Enumerable.Empty<SelectListItem>());
-            return View(product);
+                LoadViewBagData();
+                return View(product);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading product for edit with ID {ProductId}", id);
+                TempData["Error"] = "حدث خطأ أثناء تحميل المنتج للتعديل";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         // POST: Products/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ProductId,ProductName,BrandId,ModelYear,ListPrice,CategoryId")] Product product)
+        public async Task<IActionResult> Edit(int id, Product product, IFormFile? productImage)
         {
             if (id != product.ProductId)
-            {
                 return NotFound();
-            }
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                try
-                {
-                    _context.Update(product);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ProductExists(product.ProductId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                LoadViewBagData();
+                return View(product);
             }
-            ViewData["BrandId"] = new SelectList(_context.Brands, "BrandId", "Name", product.BrandId);
-            ViewData["CategoryId"] = new SelectList(_context.ProductCategories, "CategoryId", "Name", product.CategoryId);
-            return View(product);
-        }
 
-        // GET: Products/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
+            try
             {
-                return NotFound();
-            }
+                var existingProduct = await _context.Products.FindAsync(id);
+                if (existingProduct == null)
+                    return NotFound();
 
-            var product = await _context.Products
-                .Include(p => p.Brand)
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(m => m.ProductId == id);
-            if (product == null)
+                existingProduct.ProductName = product.ProductName;
+                existingProduct.BrandId = product.BrandId;
+                existingProduct.CategoryId = product.CategoryId;
+                existingProduct.ListPrice = product.ListPrice;
+                existingProduct.UpdatedAt = DateTime.UtcNow;
+
+                //if (productImage != null)
+                //{
+                //    using var ms = new MemoryStream();
+                //    await productImage.CopyToAsync(ms);
+                //    existingProduct.ImageData = ms.ToArray();
+                //    existingProduct.ImageContentType = productImage.ContentType;
+                //}
+
+                _context.Products.Update(existingProduct);
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = "تم تحديث المنتج بنجاح";
+                return RedirectToAction(nameof(Details), new { id = existingProduct.ProductId });
+            }
+            catch (Exception ex)
             {
-                return NotFound();
+                _logger.LogError(ex, "Error updating product {ProductId}", id);
+                ModelState.AddModelError("", "حدث خطأ أثناء تحديث المنتج");
+                LoadViewBagData();
+                return View(product);
             }
-
-            return View(product);
         }
 
         // POST: Products/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product != null)
+            try
             {
+                var product = await _context.Products.FindAsync(id);
+                if (product == null)
+                    return NotFound();
+
                 _context.Products.Remove(product);
                 await _context.SaveChangesAsync();
+
+                TempData["Success"] = "تم حذف المنتج بنجاح";
+                return RedirectToAction(nameof(Index));
             }
-            return RedirectToAction(nameof(Index));
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting product {ProductId}", id);
+                TempData["Error"] = "حدث خطأ أثناء حذف المنتج";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
-        private bool ProductExists(int id)
+        // GET: Products/GetProductImage/5
+        //[HttpGet]
+        //public async Task<IActionResult> GetProductImage(int id)
+        //{
+        //    var product = await _context.Products.FindAsync(id);
+        //    if (product == null || product.ImageData == null)
+        //        return NotFound();
+
+        //    return File(product.ImageData, product.ImageContentType ?? "image/jpeg");
+        //}
+
+        private void LoadViewBagData()
         {
-            return _context.Products.Any(e => e.ProductId == id);
+            ViewBag.Brands = new SelectList(_context.Brands.OrderBy(b => b.BrandName), "BrandId", "BrandName");
+            ViewBag.Categories = new SelectList(_context.ProductCategories.OrderBy(c => c.Name), "CategoryId", "Name");
         }
     }
 }

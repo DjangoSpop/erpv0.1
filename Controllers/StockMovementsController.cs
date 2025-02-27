@@ -139,7 +139,22 @@ namespace erpv0._1.Controllers
                 return View(movement);
             }
         }
+        public async Task<IActionResult> GetStockMovementAnalytics(int productId, DateTime startDate, DateTime endDate)
+        {
+            var movements = await _context.StockMovements
+                .Where(m => m.ProductId == productId &&
+                           m.MovementDate >= startDate &&
+                           m.MovementDate <= endDate)
+                .GroupBy(m => new { m.MovementType, Date = m.MovementDate.Date })
+                .Select(g => new {
+                    Date = g.Key.Date,
+                    Type = g.Key.MovementType,
+                    Quantity = g.Sum(m => m.Quantity)
+                })
+                .ToListAsync();
 
+            return Json(movements);
+        }
         private async Task LoadViewBags()
         {
             ViewBag.Products = await _context.Products

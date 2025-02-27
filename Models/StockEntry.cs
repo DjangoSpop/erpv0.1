@@ -42,5 +42,5 @@ public partial class StockEntry
 
     public virtual ICollection<StockMovement> StockMovements { get; set; } = new List<StockMovement>();
 
-    public virtual Warehouse Warehouse { get; set; } = null!;
+    public virtual Warehouse Warehouse { get; set; }
 }

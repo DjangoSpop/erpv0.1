@@ -1,0 +1,133 @@
+﻿@model erpv0._1.Models.ViewModels.InvoiceViewModel
+
+@{
+    ViewData["Title"] = "حذف الفاتورة";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <div class="card shadow border-danger">
+        <div class="card-header bg-danger text-white">
+            <h1 class="h3 mb-0">تأكيد حذف الفاتورة رقم @Model.InvoiceNo</h1>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle fa-lg"></i>
+                <span class="h5 ms-2">هل أنت متأكد من رغبتك في حذف هذه الفاتورة مع جميع مدفوعاتها؟</span>
+                <p class="mb-0 mt-2">هذا الإجراء لا يمكن التراجع عنه، وسيتم حذف جميع المدفوعات المرتبطة بهذه الفاتورة بشكل نهائي.</p>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">معلومات الفاتورة</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.InvoiceNo)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.InvoiceNo)</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.InvoiceDate)</dt>
+                                <dd class="col-sm-8">@(Model.InvoiceDate?.ToString("yyyy-MM-dd") ?? "غير محدد")</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.TotalAmount)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.TotalAmount)</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.PaymentStatus)</dt>
+                                <dd class="col-sm-8">
+                                    @{
+                                        var badgeClass = Model.PaymentStatus switch
+                                        {
+                                            "غير محدد" => "bg-secondary",
+                                            "غير مدفوع" => "bg-danger",
+                                            "مدفوع جزئياً" => "bg-warning text-dark",
+                                            "مدفوع بالكامل" => "bg-success",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @badgeClass">@Model.PaymentStatus</span>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">معلومات المورد والطلب</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.SupplierName)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.SupplierName)</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.OrderNumber)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.OrderNumber)</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.PaymentCount)</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge bg-danger">@Model.PaymentCount @(Model.PaymentCount == 1 ? "دفعة" : "دفعات") سيتم حذفها</span>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card border-danger">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0">ملخص المعلومات المالية</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="card mb-0">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title">إجمالي الفاتورة</h6>
+                                            <p class="h2 text-danger">@(Model.TotalAmount?.ToString("C") ?? "0.00")</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="card mb-0">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title">المبلغ المدفوع</h6>
+                                            <p class="h2 text-success">@Model.PaidAmount.ToString("C")</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="card mb-0">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title">المبلغ المتبقي</h6>
+                                            <p class="h2 @(Model.RemainingAmount > 0 ? "text-danger" : "text-success")">@Model.RemainingAmount.ToString("C")</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form asp-action="Delete" class="mt-4">
+                <input type="hidden" asp-for="InvoiceNo" />
+
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> إلغاء
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> تأكيد الحذف
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

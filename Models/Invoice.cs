@@ -1,22 +1,35 @@
-﻿namespace erpv0._1.Models;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-public partial class Invoice
+namespace erpv0._1.Models
 {
-    public int InvoiceNo { get; set; }
+    public partial class Invoice
+    {
+        public Invoice()
+        {
+            Payments = new HashSet<Payment>();
+        }
 
-    public int? SupplierId { get; set; }
+        [Key]
+        public int InvoiceNo { get; set; }
 
-    public DateOnly? InvoiceDate { get; set; }
+        public int? SupplierId { get; set; }
 
-    public decimal? TotalAmount { get; set; }
+        public DateOnly? InvoiceDate { get; set; }
 
-    public string? Notes { get; set; }
+        public decimal? TotalAmount { get; set; }
 
-    public int? OrderId { get; set; }
+        public string? Notes { get; set; }
 
-    public virtual SubOrder? Order { get; set; }
+        public int? OrderId { get; set; }
 
-    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+        public virtual SubOrder? Order { get; set; }
 
-    public virtual Supplier? Supplier { get; set; }
+        // Collection navigation property with the correct naming per the entity configuration
+        public virtual ICollection<Payment> Payments { get; set; }
+
+        public virtual Supplier? Supplier { get; set; }
+    }
 }

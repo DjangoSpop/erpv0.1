@@ -1,0 +1,67 @@
+﻿/* Index.cshtml */
+@model IEnumerable<erpv0._1.Models.Staff>
+@{
+    ViewData["Title"] = "Staff List";
+}
+
+<h2>Staff List</h2>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5 class="card-title">Total Staff</h5>
+                <p class="card-text">@ViewBag.TotalStaff</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h5 class="card-title">Active Staff</h5>
+                <p class="card-text">@ViewBag.ActiveStaff</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <h5 class="card-title">Inactive Staff</h5>
+                <p class="card-text">@ViewBag.InactiveStaff</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Store</th>
+            <th>Manager</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.FirstName @item.LastName</td>
+                <td>@item.Email</td>
+                <td>@item.Phone</td>
+                <td>@(item.Store != null ? item.Store.StoreName : "N/A")</td>
+                <td>@(item.Manager != null ? item.Manager.FirstName + " " + item.Manager.LastName : "N/A")</td>
+                <td>
+                    <a class="btn btn-info" asp-action="Details" asp-route-id="@item.StaffId">Details</a>
+                    <a class="btn btn-warning" asp-action="Edit" asp-route-id="@item.StaffId">Edit</a>
+                    <a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.StaffId">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<a class="btn btn-success" asp-action="Create">Create New Staff</a>
+
+/* Create.cshtml, Edit.cshtml, Details.cshtml, Delete.cshtml will follow similar Bootstrap-styled layouts */

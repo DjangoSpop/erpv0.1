@@ -1,0 +1,174 @@
+﻿@model IEnumerable<erpv0._1.Models.ViewModels.InvoiceViewModel>
+
+@{
+    ViewData["Title"] = "الفواتير";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // Calculate statistics
+    var totalInvoices = Model.Count();
+    var totalAmount = Model.Sum(i => i.TotalAmount ?? 0);
+    var paidAmount = Model.Sum(i => i.PaidAmount);
+    var remainingAmount = Model.Sum(i => i.RemainingAmount);
+}
+
+<div class="container-fluid mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0">الفواتير</h1>
+            <a asp-action="Create" class="btn btn-light">
+                <i class="fas fa-plus"></i> إضافة فاتورة جديدة
+            </a>
+        </div>
+        <div class="card-body">
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-primary shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        إجمالي الفواتير
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">@totalInvoices</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-file-invoice fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-info shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                        إجمالي المبالغ
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">@totalAmount.ToString("C")</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        المبالغ المدفوعة
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">@paidAmount.ToString("C")</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-danger shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                        المبالغ المتبقية
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">@remainingAmount.ToString("C")</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-clock fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoices Table -->
+            <div class="table-responsive">
+                <table class="table table-hover table-striped" id="dataTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model.InvoiceNo)</th>
+                            <th>@Html.DisplayNameFor(model => model.SupplierName)</th>
+                            <th>@Html.DisplayNameFor(model => model.InvoiceDate)</th>
+                            <th>@Html.DisplayNameFor(model => model.OrderNumber)</th>
+                            <th>@Html.DisplayNameFor(model => model.TotalAmount)</th>
+                            <th>@Html.DisplayNameFor(model => model.PaidAmount)</th>
+                            <th>@Html.DisplayNameFor(model => model.RemainingAmount)</th>
+                            <th>@Html.DisplayNameFor(model => model.PaymentStatus)</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@Html.DisplayFor(modelItem => item.InvoiceNo)</td>
+                                <td>@Html.DisplayFor(modelItem => item.SupplierName)</td>
+                                <td>@(item.InvoiceDate?.ToString("yyyy-MM-dd") ?? "غير محدد")</td>
+                                <td>@Html.DisplayFor(modelItem => item.OrderNumber)</td>
+                                <td>@Html.DisplayFor(modelItem => item.TotalAmount)</td>
+                                <td>@Html.DisplayFor(modelItem => item.PaidAmount)</td>
+                                <td>@Html.DisplayFor(modelItem => item.RemainingAmount)</td>
+                                <td>
+                                    @{
+                                        var badgeClass = item.PaymentStatus switch
+                                        {
+                                            "غير محدد" => "bg-secondary",
+                                            "غير مدفوع" => "bg-danger",
+                                            "مدفوع جزئياً" => "bg-warning text-dark",
+                                            "مدفوع بالكامل" => "bg-success",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @badgeClass">@item.PaymentStatus</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a asp-action="Edit" asp-route-id="@item.InvoiceNo" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a asp-action="Details" asp-route-id="@item.InvoiceNo" class="btn btn-sm btn-info">
+                                            <i class="fas fa-info-circle"></i>
+                                        </a>
+                                        <a asp-controller="Payment" asp-action="ByInvoice" asp-route-invoiceNo="@item.InvoiceNo" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-money-bill"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.InvoiceNo" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#dataTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Arabic.json"
+                },
+                "order": [[0, "desc"]]
+            });
+        });
+    </script>
+}

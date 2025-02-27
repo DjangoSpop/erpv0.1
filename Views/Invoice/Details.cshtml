@@ -1,0 +1,192 @@
+﻿@model erpv0._1.Models.ViewModels.InvoiceViewModel
+
+@{
+    ViewData["Title"] = "تفاصيل الفاتورة";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var payments = ViewBag.Payments as List<dynamic>;
+}
+
+<div class="container-fluid mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-0">تفاصيل الفاتورة رقم: @Model.InvoiceNo</h1>
+                <p class="mb-0 text-white-50">تاريخ الفاتورة: @(Model.InvoiceDate?.ToString("yyyy-MM-dd") ?? "غير محدد")</p>
+            </div>
+            <div>
+                <a asp-action="Edit" asp-route-id="@Model.InvoiceNo" class="btn btn-warning">
+                    <i class="fas fa-edit"></i> تعديل
+                </a>
+                <a asp-controller="Payment" asp-action="ByInvoice" asp-route-invoiceNo="@Model.InvoiceNo" class="btn btn-light">
+                    <i class="fas fa-money-bill"></i> المدفوعات
+                </a>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> العودة للقائمة
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Invoice Information -->
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-file-invoice"></i> معلومات الفاتورة</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.InvoiceNo)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.InvoiceNo)</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.InvoiceDate)</dt>
+                                <dd class="col-sm-8">@(Model.InvoiceDate?.ToString("yyyy-MM-dd") ?? "غير محدد")</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.TotalAmount)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.TotalAmount)</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.PaymentStatus)</dt>
+                                <dd class="col-sm-8">
+                                    @{
+                                        var badgeClass = Model.PaymentStatus switch
+                                        {
+                                            "غير محدد" => "bg-secondary",
+                                            "غير مدفوع" => "bg-danger",
+                                            "مدفوع جزئياً" => "bg-warning text-dark",
+                                            "مدفوع بالكامل" => "bg-success",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @badgeClass">@Model.PaymentStatus</span>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Supplier and Order Information -->
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-user"></i> معلومات المورد والطلب</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.SupplierName)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.SupplierName)</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.OrderNumber)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.OrderNumber)</dd>
+
+                                <dt class="col-sm-4">ملاحظات</dt>
+                                <dd class="col-sm-8">
+                                    @if (string.IsNullOrEmpty(Model.Notes))
+                                    {
+                                        <span class="text-muted">لا توجد ملاحظات</span>
+                                    }
+                                    else
+                                    {
+                                        @Model.Notes
+                                    }
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Summary Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-calculator"></i> ملخص المدفوعات</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card bg-light mb-3">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">إجمالي الفاتورة</h6>
+                                    <p class="display-6">@(Model.TotalAmount?.ToString("C") ?? "0.00")</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white mb-3">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">المبلغ المدفوع</h6>
+                                    <p class="display-6">@Model.PaidAmount.ToString("C")</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card @(Model.RemainingAmount > 0 ? "bg-danger text-white" : "bg-light") mb-3">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">المبلغ المتبقي</h6>
+                                    <p class="display-6">@Model.RemainingAmount.ToString("C")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="progress mt-3" style="height: 25px;">
+                        @{
+                            var progressPercentage = Model.TotalAmount.HasValue && Model.TotalAmount.Value > 0
+                            ? (int)Math.Min(100, (Model.PaidAmount / Model.TotalAmount.Value) * 100)
+                            : 0;
+                        }
+                        <div class="progress-bar bg-success" role="progressbar"
+                             style="width: @progressPercentage%;"
+                             aria-valuenow="@progressPercentage" aria-valuemin="0" aria-valuemax="100">
+                            @progressPercentage%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payments Table -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-money-bill"></i> المدفوعات</h5>
+                </div>
+                <div class="card-body">
+                    @if (payments != null && payments.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>رقم الشحنة</th>
+                                        <th>رقم الدفعة</th>
+                                        <th>تاريخ الشحن</th>
+                                        <th>حالة الشحن</th>
+                                        <th>طريقة الشحن</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var payment in payments)
+                                    {
+                                        <tr>
+                                            <td>@payment.ShipmentId</td>
+                                            <td>@payment.PaymentId</td>
+                                            <td>@(payment.ShipmentDate?.ToString("yyyy-MM-dd") ?? "غير محدد")</td>
+                                            <td>@(payment.ShipmentStatus ?? "غير محدد")</td>
+                                            <td>@(payment.ShipmentMethod ?? "غير محدد")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> لا توجد مدفوعات مسجلة لهذه الفاتورة.
+                            <a asp-controller="Payment" asp-action="Create" asp-route-invoiceNo="@Model.InvoiceNo" class="alert-link">إضافة دفعة جديدة</a>.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

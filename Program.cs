@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Globalization;
-using AutoMapper;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddMemoryCache();
@@ -20,12 +19,21 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
            .LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information));
 
 builder.Services.AddScoped<ISystemSettingsService, SystemSettingsService>();
+
 // Add Localization
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.AddMvc()
     .AddViewLocalization()
     .AddDataAnnotationsLocalization();
+builder.Services.AddLogging(loggingBuilder =>
+{
+    loggingBuilder.AddConsole();
+    loggingBuilder.AddDebug();
+    // Add other providers as needed
 
+    // Configure minimum log level
+    loggingBuilder.SetMinimumLevel(LogLevel.Information);
+});
 
 // Configure supported cultures
 builder.Services.Configure<RequestLocalizationOptions>(options =>
@@ -43,8 +51,11 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 
 
 var app = builder.Build();
+//var port = Environment.GetEnvironmentVariable("PORT") ?? "80";
+
 
 // Configure the HTTP request pipeline.
+
 // Configure error handling
 if (!app.Environment.IsDevelopment())
 {
@@ -57,7 +68,7 @@ else
     app.UseDeveloperExceptionPage();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 // Add Localization middleware

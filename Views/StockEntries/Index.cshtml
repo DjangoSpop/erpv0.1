@@ -1,5 +1,5 @@
 ﻿@model IEnumerable<erpv0._1.Models.StockEntry>
-
+@if (Model != null && Model.Any()){
 <div class="container-fluid px-4" dir="rtl">
     @* <form asp-action="Delete" asp-controller="StockEntries" method="post" onsubmit="return confirm('هل أنت متأكد من الحذف؟');"> *@
     @*     <input type="hidden" name="id" value="@entry.EntryId" /> *@
@@ -210,6 +210,7 @@
         }
     </div>
 </div>
+}
 <!-- Import Excel Modal -->
 <div class="modal fade" id="importModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">

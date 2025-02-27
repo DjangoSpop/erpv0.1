@@ -1,0 +1,122 @@
+﻿@model erpv0._1.Models.ViewModels.OrderViewModel
+@{
+    ViewData["Title"] = "حذف الطلب";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <div class="card shadow border-danger">
+        <div class="card-header bg-danger text-white">
+            <h1 class="h3 mb-0">تأكيد حذف الطلب رقم @Model.OrderId</h1>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle fa-lg"></i>
+                <span class="h5 ms-2">هل أنت متأكد من رغبتك في حذف هذا الطلب مع جميع عناصره؟</span>
+                <p class="mb-0 mt-2">هذا الإجراء لا يمكن التراجع عنه، وسيتم حذف جميع عناصر الطلب بشكل نهائي.</p>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">معلومات الطلب</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.OrderId)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.OrderId)</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.OrderDate)</dt>
+                                <dd class="col-sm-8">@Model.OrderDate.ToString("yyyy-MM-dd")</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.RequiredDate)</dt>
+                                <dd class="col-sm-8">@Model.RequiredDate.ToString("yyyy-MM-dd")</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.OrderStatusName)</dt>
+                                <dd class="col-sm-8">
+                                    @{
+                                        var badgeClass = Model.OrderStatus switch
+                                        {
+                                            1 => "bg-secondary",
+                                            2 => "bg-warning text-dark",
+                                            3 => "bg-info",
+                                            4 => "bg-success",
+                                            5 => "bg-danger",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @badgeClass">@Model.OrderStatusName</span>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">معلومات العميل والمتجر</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.CustomerName)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.CustomerName)</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.StoreName)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.StoreName)</dd>
+
+                                <dt class="col-sm-4">@Html.DisplayNameFor(model => model.StaffName)</dt>
+                                <dd class="col-sm-8">@Html.DisplayFor(model => model.StaffName)</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card border-danger">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0">ملخص المعلومات المالية</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card mb-0">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title">عدد العناصر</h6>
+                                            <p class="h2">@Model.ItemCount</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="card mb-0">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title">إجمالي قيمة الطلب</h6>
+                                            <p class="h2 text-danger">@Model.TotalAmount.ToString("C")</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form asp-action="Delete" class="mt-4">
+                <input type="hidden" asp-for="OrderId" />
+
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> إلغاء
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> تأكيد الحذف
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

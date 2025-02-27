@@ -1,0 +1,139 @@
+﻿@model IEnumerable<erpv0._1.Models.Payment>
+
+@{
+    ViewData["Title"] = "مدفوعات الفاتورة";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var invoiceNo = ViewBag.InvoiceNo;
+    var invoiceTotal = ViewBag.InvoiceTotal;
+    var supplierName = ViewBag.SupplierName;
+    var paidAmount = ViewBag.PaidAmount;
+    var remainingAmount = ViewBag.RemainingAmount;
+}
+
+<div class="container-fluid mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-0">مدفوعات الفاتورة رقم: @invoiceNo</h1>
+                <p class="mb-0 text-white-50">المورد: @supplierName</p>
+            </div>
+            <div>
+                <a asp-action="Create" asp-route-invoiceNo="@invoiceNo" class="btn btn-light">
+                    <i class="fas fa-plus"></i> إضافة دفعة جديدة
+                </a>
+                <a asp-controller="Invoice" asp-action="Details" asp-route-id="@invoiceNo" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-left"></i> العودة للفاتورة
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Payment Summary Cards -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-light mb-3">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">إجمالي الفاتورة</h6>
+                            <p class="display-6">@invoiceTotal.ToString("C")</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card bg-success text-white mb-3">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">المبلغ المدفوع</h6>
+                            <p class="display-6">@paidAmount.ToString("C")</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card @(remainingAmount > 0 ? "bg-danger text-white" : "bg-light") mb-3">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">المبلغ المتبقي</h6>
+                            <p class="display-6">@remainingAmount.ToString("C")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress mb-4" style="height: 25px;">
+                @{
+                    var progressPercentage = invoiceTotal > 0
+                    ? (int)Math.Min(100, (paidAmount / invoiceTotal) * 100)
+                    : 0;
+                }
+                <div class="progress-bar bg-success" role="progressbar"
+                     style="width: @progressPercentage%;"
+                     aria-valuenow="@progressPercentage" aria-valuemin="0" aria-valuemax="100">
+                    @progressPercentage%
+                </div>
+            </div>
+
+            <!-- Payments Table -->
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped" id="dataTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>رقم الشحنة</th>
+                                <th>رقم الدفعة</th>
+                                <th>تاريخ الشحن</th>
+                                <th>حالة الشحن</th>
+                                <th>طريقة الشحن</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@item.ShipmentId</td>
+                                    <td>@item.PaymentId</td>
+                                    <td>@(item.ShipmentDate?.ToString("yyyy-MM-dd") ?? "غير محدد")</td>
+                                    <td>@(item.ShipmentStatus ?? "غير محدد")</td>
+                                    <td>@(item.ShipmentMethod ?? "غير محدد")</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a asp-action="Edit" asp-route-id="@item.ShipmentId" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a asp-action="Details" asp-route-id="@item.ShipmentId" class="btn btn-sm btn-info">
+                                                <i class="fas fa-info-circle"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@item.ShipmentId" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> لا توجد مدفوعات مسجلة لهذه الفاتورة.
+                    <a asp-action="Create" asp-route-invoiceNo="@invoiceNo" class="alert-link">إضافة دفعة جديدة</a>.
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#dataTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Arabic.json"
+                },
+                "order": [[0, "desc"]]
+            });
+        });
+    </script>
+}
