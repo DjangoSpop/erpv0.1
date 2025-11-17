@@ -1,0 +1,78 @@
+@model IEnumerable<Motel.Application.DTOs.RoomDto>
+@{
+    ViewData["Title"] = "الغرف";
+}
+
+<div class="row mb-3">
+    <div class="col">
+        <h2>إدارة الغرف</h2>
+    </div>
+    <div class="col text-end">
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> إضافة غرفة جديدة
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>رقم الغرفة</th>
+                        <th>النوع</th>
+                        <th>السعة</th>
+                        <th>السعر / ليلة</th>
+                        <th>الحالة</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var room in Model)
+                    {
+                        var statusBadge = room.Status switch
+                        {
+                            Motel.Domain.Enums.RoomStatus.Available => "bg-success",
+                            Motel.Domain.Enums.RoomStatus.Occupied => "bg-danger",
+                            Motel.Domain.Enums.RoomStatus.Reserved => "bg-warning",
+                            Motel.Domain.Enums.RoomStatus.OutOfService => "bg-secondary",
+                            _ => "bg-secondary"
+                        };
+                        var statusText = room.Status switch
+                        {
+                            Motel.Domain.Enums.RoomStatus.Available => "متاحة",
+                            Motel.Domain.Enums.RoomStatus.Occupied => "مشغولة",
+                            Motel.Domain.Enums.RoomStatus.Reserved => "محجوزة",
+                            Motel.Domain.Enums.RoomStatus.OutOfService => "خارج الخدمة",
+                            _ => room.Status.ToString()
+                        };
+
+                        <tr>
+                            <td><strong>@room.Number</strong></td>
+                            <td>@room.Type</td>
+                            <td>@room.Capacity شخص</td>
+                            <td>@room.BaseNightlyRate.ToString("N2") ج.م</td>
+                            <td><span class="badge @statusBadge">@statusText</span></td>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@room.Id" class="btn btn-sm btn-info">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a asp-action="Edit" asp-route-id="@room.Id" class="btn btn-sm btn-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form asp-action="Delete" asp-route-id="@room.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('هل أنت متأكد من حذف هذه الغرفة؟')">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
