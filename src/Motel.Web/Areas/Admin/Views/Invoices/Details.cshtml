@@ -1,0 +1,138 @@
+@model Motel.Application.DTOs.InvoiceDto
+@{
+    ViewData["Title"] = "تفاصيل الفاتورة";
+}
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>تفاصيل الفاتورة</h2>
+            <div>
+                <a asp-action="Print" asp-route-id="@Model.Id" target="_blank" class="btn btn-secondary">
+                    <i class="bi bi-printer"></i> طباعة
+                </a>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-arrow-right"></i> رجوع
+                </a>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-receipt"></i> فاتورة رقم: @Model.Serial</h5>
+                    @if (Model.Status == Motel.Domain.Enums.InvoiceStatus.Paid)
+                    {
+                        <span class="badge bg-success fs-6">مدفوعة</span>
+                    }
+                    else if (Model.Status == Motel.Domain.Enums.InvoiceStatus.Issued)
+                    {
+                        <span class="badge bg-warning fs-6">صادرة</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary fs-6">@Model.Status</span>
+                    }
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">معلومات النزيل</h6>
+                        <p class="mb-1"><strong>الاسم:</strong> @Model.ClientName</p>
+                        <p class="mb-1"><strong>الغرفة:</strong> @Model.RoomNumber</p>
+                        <p class="mb-0"><strong>الفترة:</strong> من @Model.CheckInDate.ToString("dd/MM/yyyy") إلى @Model.CheckOutDate.ToString("dd/MM/yyyy")</p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <h6 class="text-muted">معلومات الفاتورة</h6>
+                        <p class="mb-1"><strong>تاريخ الإصدار:</strong> @Model.IssuedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+                        @if (Model.PaidAtUtc.HasValue)
+                        {
+                            <p class="mb-0"><strong>تاريخ الدفع:</strong> @Model.PaidAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+                        }
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>البيان</th>
+                                <th class="text-end">المبلغ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>المجموع الفرعي</td>
+                                <td class="text-end">@Model.Subtotal.ToString("N2") ج.م</td>
+                            </tr>
+                            <tr>
+                                <td>ضريبة القيمة المضافة (@Model.TaxPercent%)</td>
+                                <td class="text-end">@Model.TaxAmount.ToString("N2") ج.م</td>
+                            </tr>
+                            <tr class="table-primary fw-bold">
+                                <td>الإجمالي</td>
+                                <td class="text-end text-success fs-5">@Model.Total.ToString("N2") ج.م</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                @if (Model.Status == Motel.Domain.Enums.InvoiceStatus.Paid && Model.PaymentMethod.HasValue)
+                {
+                    <div class="alert alert-success mt-3">
+                        <strong><i class="bi bi-check-circle"></i> تم الدفع بنجاح</strong><br />
+                        <strong>طريقة الدفع:</strong>
+                        @switch (Model.PaymentMethod.Value)
+                        {
+                            case Motel.Domain.Enums.PaymentMethod.Cash:
+                                <span>نقداً</span>
+                                break;
+                            case Motel.Domain.Enums.PaymentMethod.Card:
+                                <span>بطاقة ائتمان</span>
+                                break;
+                            case Motel.Domain.Enums.PaymentMethod.BankTransfer:
+                                <span>تحويل بنكي</span>
+                                break;
+                            case Motel.Domain.Enums.PaymentMethod.MobileWallet:
+                                <span>محفظة إلكترونية</span>
+                                break;
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (Model.Status == Motel.Domain.Enums.InvoiceStatus.Issued)
+        {
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">تسجيل الدفع</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="MarkPaid" asp-route-id="@Model.Id" method="post" class="row g-3">
+                        @Html.AntiForgeryToken()
+                        <div class="col-md-8">
+                            <label class="form-label">طريقة الدفع</label>
+                            <select name="paymentMethod" class="form-select" required>
+                                <option value="">-- اختر طريقة الدفع --</option>
+                                <option value="@((int)Motel.Domain.Enums.PaymentMethod.Cash)">نقداً</option>
+                                <option value="@((int)Motel.Domain.Enums.PaymentMethod.Card)">بطاقة ائتمان</option>
+                                <option value="@((int)Motel.Domain.Enums.PaymentMethod.BankTransfer)">تحويل بنكي</option>
+                                <option value="@((int)Motel.Domain.Enums.PaymentMethod.MobileWallet)">محفظة إلكترونية</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label d-block">&nbsp;</label>
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="bi bi-check-circle"></i> تسجيل الدفع
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>

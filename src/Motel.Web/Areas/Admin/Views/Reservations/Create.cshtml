@@ -1,0 +1,97 @@
+@model Motel.Application.DTOs.CreateReservationDto
+@{
+    ViewData["Title"] = "إنشاء حجز جديد";
+}
+
+<div class="row">
+    <div class="col-md-10 offset-md-1">
+        <h2>إنشاء حجز جديد</h2>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ClientId" class="form-label">النزيل</label>
+                            <select asp-for="ClientId" class="form-select" asp-items="ViewBag.Clients">
+                                <option value="">-- اختر النزيل --</option>
+                            </select>
+                            <span asp-validation-for="ClientId" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="RoomId" class="form-label">الغرفة</label>
+                            <select asp-for="RoomId" class="form-select" asp-items="ViewBag.Rooms">
+                                <option value="">-- اختر الغرفة --</option>
+                            </select>
+                            <span asp-validation-for="RoomId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="CheckInDate" class="form-label">تاريخ الوصول</label>
+                            <input asp-for="CheckInDate" type="date" class="form-control" />
+                            <span asp-validation-for="CheckInDate" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="CheckOutDate" class="form-label">تاريخ المغادرة</label>
+                            <input asp-for="CheckOutDate" type="date" class="form-control" />
+                            <span asp-validation-for="CheckOutDate" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Guests" class="form-label">عدد النزلاء</label>
+                            <input asp-for="Guests" type="number" class="form-control" min="1" />
+                            <span asp-validation-for="Guests" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="NightlyRate" class="form-label">السعر / ليلة (ج.م)</label>
+                            <input asp-for="NightlyRate" type="number" step="0.01" class="form-control" />
+                            <span asp-validation-for="NightlyRate" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="DiscountAmount" class="form-label">الخصم (ج.م)</label>
+                            <input asp-for="DiscountAmount" type="number" step="0.01" class="form-control" value="0" />
+                            <span asp-validation-for="DiscountAmount" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="ExtraCharges" class="form-label">رسوم إضافية (ج.م)</label>
+                            <input asp-for="ExtraCharges" type="number" step="0.01" class="form-control" value="0" />
+                            <span asp-validation-for="ExtraCharges" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-8 mb-3">
+                            <label asp-for="Notes" class="form-label">ملاحظات</label>
+                            <input asp-for="Notes" class="form-control" />
+                            <span asp-validation-for="Notes" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> إنشاء الحجز
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> إلغاء
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

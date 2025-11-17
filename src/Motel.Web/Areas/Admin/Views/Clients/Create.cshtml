@@ -1,0 +1,61 @@
+@model Motel.Application.DTOs.CreateClientDto
+@{
+    ViewData["Title"] = "إضافة نزيل جديد";
+}
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <h2>إضافة نزيل جديد</h2>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="FullName" class="form-label">الاسم الكامل</label>
+                        <input asp-for="FullName" class="form-control" placeholder="أدخل الاسم الكامل" />
+                        <span asp-validation-for="FullName" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NationalIdOrPassport" class="form-label">رقم الهوية / جواز السفر</label>
+                        <input asp-for="NationalIdOrPassport" class="form-control" placeholder="رقم الهوية الوطنية أو جواز السفر" />
+                        <span asp-validation-for="NationalIdOrPassport" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Phone" class="form-label">رقم الهاتف</label>
+                        <input asp-for="Phone" class="form-control" placeholder="01XXXXXXXXX" />
+                        <span asp-validation-for="Phone" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label">البريد الإلكتروني (اختياري)</label>
+                        <input asp-for="Email" type="email" class="form-control" placeholder="example@email.com" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Notes" class="form-label">ملاحظات (اختياري)</label>
+                        <textarea asp-for="Notes" class="form-control" rows="3" placeholder="أي ملاحظات إضافية..."></textarea>
+                        <span asp-validation-for="Notes" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> حفظ
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> إلغاء
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

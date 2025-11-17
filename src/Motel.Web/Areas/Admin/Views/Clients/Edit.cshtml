@@ -1,0 +1,62 @@
+@model Motel.Application.DTOs.UpdateClientDto
+@{
+    ViewData["Title"] = "تعديل بيانات النزيل";
+    var clientId = ViewBag.ClientId as Guid?;
+}
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <h2>تعديل بيانات النزيل</h2>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <form asp-action="Edit" asp-route-id="@clientId" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="FullName" class="form-label">الاسم الكامل</label>
+                        <input asp-for="FullName" class="form-control" />
+                        <span asp-validation-for="FullName" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NationalIdOrPassport" class="form-label">رقم الهوية / جواز السفر</label>
+                        <input asp-for="NationalIdOrPassport" class="form-control" />
+                        <span asp-validation-for="NationalIdOrPassport" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Phone" class="form-label">رقم الهاتف</label>
+                        <input asp-for="Phone" class="form-control" />
+                        <span asp-validation-for="Phone" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label">البريد الإلكتروني</label>
+                        <input asp-for="Email" type="email" class="form-control" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Notes" class="form-label">ملاحظات</label>
+                        <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="Notes" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> حفظ التعديلات
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> إلغاء
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

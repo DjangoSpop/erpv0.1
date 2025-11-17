@@ -1,0 +1,108 @@
+@model IEnumerable<Motel.Application.Interfaces.DailyOccupancyDto>
+@{
+    ViewData["Title"] = "تقرير الإشغال";
+    var date = ViewBag.Date as string;
+}
+
+<div class="row mb-3">
+    <div class="col">
+        <h2>تقرير الإشغال اليومي</h2>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form asp-action="Occupancy" method="get" class="row g-3">
+            <div class="col-md-10">
+                <label class="form-label">التاريخ</label>
+                <input type="date" name="date" class="form-control" value="@date" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label d-block">&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> عرض
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-3">
+    @foreach (var item in Model)
+    {
+        var total = item.Available + item.Occupied + item.Reserved + item.OutOfService;
+
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h6>متاحة</h6>
+                    <h2>@item.Available</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h6>مشغولة</h6>
+                    <h2>@item.Occupied</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h6>محجوزة</h6>
+                    <h2>@item.Reserved</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h6>نسبة الإشغال</h6>
+                    <h2>@item.OccupancyRate.ToString("F1")%</h2>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="card mt-3">
+    <div class="card-body">
+        <canvas id="occupancyChart" height="80"></canvas>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('occupancyChart');
+    @foreach (var item in Model)
+    {
+        <text>
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['متاحة', 'مشغولة', 'محجوزة', 'خارج الخدمة'],
+                datasets: [{
+                    data: [@item.Available, @item.Occupied, @item.Reserved, @item.OutOfService],
+                    backgroundColor: ['#28a745', '#dc3545', '#ffc107', '#6c757d']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    title: {
+                        display: true,
+                        text: 'توزيع حالة الغرف'
+                    }
+                }
+            }
+        });
+        </text>
+    }
+</script>
+}

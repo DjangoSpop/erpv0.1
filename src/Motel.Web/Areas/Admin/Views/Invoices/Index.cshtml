@@ -1,0 +1,77 @@
+@model IEnumerable<Motel.Application.DTOs.InvoiceDto>
+@{
+    ViewData["Title"] = "الفواتير";
+}
+
+<div class="row mb-3">
+    <div class="col">
+        <h2>إدارة الفواتير</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>رقم الفاتورة</th>
+                        <th>النزيل</th>
+                        <th>الغرفة</th>
+                        <th>تاريخ الإصدار</th>
+                        <th>المبلغ الإجمالي</th>
+                        <th>الحالة</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">لا توجد فواتير</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var invoice in Model.OrderByDescending(i => i.IssuedAtUtc))
+                        {
+                            var statusBadge = invoice.Status switch
+                            {
+                                Motel.Domain.Enums.InvoiceStatus.Paid => "bg-success",
+                                Motel.Domain.Enums.InvoiceStatus.Issued => "bg-warning",
+                                Motel.Domain.Enums.InvoiceStatus.Draft => "bg-secondary",
+                                Motel.Domain.Enums.InvoiceStatus.Cancelled => "bg-danger",
+                                _ => "bg-secondary"
+                            };
+                            var statusText = invoice.Status switch
+                            {
+                                Motel.Domain.Enums.InvoiceStatus.Paid => "مدفوعة",
+                                Motel.Domain.Enums.InvoiceStatus.Issued => "صادرة",
+                                Motel.Domain.Enums.InvoiceStatus.Draft => "مسودة",
+                                Motel.Domain.Enums.InvoiceStatus.Cancelled => "ملغاة",
+                                _ => invoice.Status.ToString()
+                            };
+
+                            <tr>
+                                <td><strong>@invoice.Serial</strong></td>
+                                <td>@invoice.ClientName</td>
+                                <td>@invoice.RoomNumber</td>
+                                <td>@invoice.IssuedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-success fw-bold">@invoice.Total.ToString("N2") ج.م</td>
+                                <td><span class="badge @statusBadge">@statusText</span></td>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@invoice.Id" class="btn btn-sm btn-info">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-action="Print" asp-route-id="@invoice.Id" target="_blank" class="btn btn-sm btn-secondary">
+                                        <i class="bi bi-printer"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

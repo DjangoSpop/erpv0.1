@@ -1,0 +1,68 @@
+@model Motel.Application.DTOs.UpdateRoomDto
+@{
+    ViewData["Title"] = "تعديل الغرفة";
+    var roomId = ViewBag.RoomId as Guid?;
+}
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <h2>تعديل بيانات الغرفة</h2>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <form asp-action="Edit" asp-route-id="@roomId" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Number" class="form-label">رقم الغرفة</label>
+                        <input asp-for="Number" class="form-control" />
+                        <span asp-validation-for="Number" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Type" class="form-label">نوع الغرفة</label>
+                        <select asp-for="Type" class="form-select" asp-items="Html.GetEnumSelectList<Motel.Domain.Enums.RoomType>()"></select>
+                        <span asp-validation-for="Type" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Capacity" class="form-label">السعة (عدد الأشخاص)</label>
+                        <input asp-for="Capacity" type="number" class="form-control" />
+                        <span asp-validation-for="Capacity" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="BaseNightlyRate" class="form-label">السعر / ليلة (ج.م)</label>
+                        <input asp-for="BaseNightlyRate" type="number" step="0.01" class="form-control" />
+                        <span asp-validation-for="BaseNightlyRate" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Status" class="form-label">الحالة</label>
+                        <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<Motel.Domain.Enums.RoomStatus>()"></select>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Notes" class="form-label">ملاحظات</label>
+                        <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="Notes" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> حفظ التعديلات
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> إلغاء
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

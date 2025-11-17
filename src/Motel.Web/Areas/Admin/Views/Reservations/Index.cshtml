@@ -1,0 +1,92 @@
+@model IEnumerable<Motel.Application.DTOs.ReservationDto>
+@{
+    ViewData["Title"] = "الحجوزات";
+    var dateFrom = ViewBag.DateFrom as string;
+    var dateTo = ViewBag.DateTo as string;
+}
+
+<div class="row mb-3">
+    <div class="col-md-8">
+        <h2>إدارة الحجوزات</h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> إنشاء حجز جديد
+        </a>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-3">
+            <div class="col-md-5">
+                <label class="form-label">من تاريخ</label>
+                <input type="date" name="dateFrom" class="form-control" value="@dateFrom" />
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">إلى تاريخ</label>
+                <input type="date" name="dateTo" class="form-control" value="@dateTo" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label d-block">&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> بحث
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>النزيل</th>
+                        <th>الغرفة</th>
+                        <th>تاريخ الوصول</th>
+                        <th>تاريخ المغادرة</th>
+                        <th>الليالي</th>
+                        <th>المبلغ</th>
+                        <th>الحالة</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">لا توجد حجوزات</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var reservation in Model)
+                        {
+                            var statusBadge = reservation.CheckedOut ? "bg-secondary" :
+                                            reservation.CheckedIn ? "bg-success" : "bg-warning";
+                            var statusText = reservation.CheckedOut ? "تم الخروج" :
+                                           reservation.CheckedIn ? "داخل الموتيل" : "حجز فقط";
+
+                            <tr>
+                                <td><strong>@reservation.ClientName</strong></td>
+                                <td>@reservation.RoomNumber</td>
+                                <td>@reservation.CheckInDate.ToString("dd/MM/yyyy")</td>
+                                <td>@reservation.CheckOutDate.ToString("dd/MM/yyyy")</td>
+                                <td>@reservation.Nights ليلة</td>
+                                <td class="text-success fw-bold">@reservation.TotalAmount.ToString("N2") ج.م</td>
+                                <td><span class="badge @statusBadge">@statusText</span></td>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@reservation.Id" class="btn btn-sm btn-info">
+                                        <i class="bi bi-eye"></i> عرض
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
