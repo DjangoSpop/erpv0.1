@@ -36,11 +36,11 @@
                             <i class="bi bi-box"></i> Products
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Products")">All Products</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "ProductCategories")">Categories</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Manfcture")">Manfctures</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "UnderManfcture")">UnderManfctures</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Production")"></a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "Products")"><i class="bi bi-box-seam"></i> All Products</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "ProductCategories")"><i class="bi bi-tags"></i> Categories</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "Brands")"><i class="bi bi-award"></i> Brands</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "ProductVariants")"><i class="bi bi-palette"></i> Product Variants</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "PriceHistories")"><i class="bi bi-clock-history"></i> Price History</a></li>
                         </ul>
                     </li>
 
@@ -50,9 +50,9 @@
                             <i class="bi bi-building"></i> Warehouses
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Warehouses")">All Warehouses</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "StockEntries")">Stock Entries</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "WarehouseTransfers")">Transfers</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "Warehouses")"><i class="bi bi-building-check"></i> All Warehouses</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "StockEntries")"><i class="bi bi-box-arrow-in-down"></i> Stock Entries</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "WarehouseTransfers")"><i class="bi bi-arrow-left-right"></i> Transfers</a></li>
                         </ul>
                     </li>
 
@@ -62,48 +62,48 @@
                             <i class="bi bi-boxes"></i> Stocks
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Stocks")">Stocks</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "StockEntries")">Stock Entries</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "StockMovements")">Stock Movements</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "Stocks")"><i class="bi bi-stack"></i> Stock Overview</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "StockEntries")"><i class="bi bi-box-arrow-in-down"></i> Stock Entries</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "StockMovements")"><i class="bi bi-arrow-repeat"></i> Stock Movements</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "StockReports")"><i class="bi bi-file-bar-graph"></i> Stock Reports</a></li>
                         </ul>
                     </li>      
+                    <!-- HR Management -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-boxes">HR</i>  
+                            <i class="bi bi-people"></i> HR
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Customer")">All Customers </a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Suppliers")">Suppliers</li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Staffs")">Staffs</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "Customer")"><i class="bi bi-person-badge"></i> All Customers</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "Suppliers")"><i class="bi bi-truck"></i> Suppliers</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "Staffs")"><i class="bi bi-person-workspace"></i> Staffs</a></li>
                         </ul>
                     </li>      
+                    <!-- Finance Management -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-boxes">Finance</i>  
+                            <i class="bi bi-cash-coin"></i> Finance
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Invoice")">Inovice </a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Payments")">Payments</li>
-                           
-                     
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "Invoice")"><i class="bi bi-receipt"></i> Invoices</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "Payment")"><i class="bi bi-credit-card"></i> Payments</a></li>
                         </ul>
                     </li>     
+                    <!-- Orders Management -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-boxes">Orders</i>  
+                            <i class="bi bi-cart"></i> Orders
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Order")">Order </a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "OrderItem")">OrderItem</li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "SubOrders")">SubOrders</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "SubOrderItem")">SubOrderItem</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "Order")"><i class="bi bi-bag-check"></i> Orders</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("Index", "OrderItem")"><i class="bi bi-list-ul"></i> Order Items</a></li>
                         </ul>
                     </li>
 
                     <!-- Reports -->
                     <li class="nav-item">
                         <a class="nav-link" href="@Url.Action("Index", "Reports")">
-                            <i class="bi bg-info"></i> Reports
+                            <i class="bi bi-file-earmark-bar-graph"></i> Reports
                         </a>
                     </li>
                 </ul>
