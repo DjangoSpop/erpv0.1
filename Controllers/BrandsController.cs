@@ -9,19 +9,30 @@ namespace erpv0._1.Controllers
 {
     public class BrandsController : Controller
     {
-        private readonly ApplicationDbContext _context; // Replace with your DbContext name
+        private readonly ApplicationDbContext _context;
+        private readonly ILogger<BrandsController> _logger;
 
-        public BrandsController(ApplicationDbContext context)
+        public BrandsController(ApplicationDbContext context, ILogger<BrandsController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: Brands
         public async Task<IActionResult> Index()
         {
-            var brands = await _context.Brands.ToListAsync();
-            var brandViewModels = brands.Select(b => new BrandViewModel { BrandId = b.BrandId, BrandName = b.BrandName }).ToList();
-            return View(brandViewModels);
+            try
+            {
+                var brands = await _context.Brands.ToListAsync();
+                var brandViewModels = brands.Select(b => new BrandViewModel { BrandId = b.BrandId, BrandName = b.BrandName }).ToList();
+                return View(brandViewModels);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving brands");
+                TempData["Error"] = "حدث خطأ أثناء جلب قائمة العلامات التجارية";
+                return View(new List<BrandViewModel>());
+            }
         }
 
         // GET: Brands/Details/5
@@ -56,10 +67,19 @@ namespace erpv0._1.Controllers
         {
             if (ModelState.IsValid)
             {
-                var brand = new Brand { BrandName = brandViewModel.BrandName };
-                _context.Add(brand);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    var brand = new Brand { BrandName = brandViewModel.BrandName };
+                    _context.Add(brand);
+                    await _context.SaveChangesAsync();
+                    TempData["Success"] = "تم إضافة العلامة التجارية بنجاح";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating brand");
+                    TempData["Error"] = "حدث خطأ أثناء إضافة العلامة التجارية";
+                }
             }
             return View(brandViewModel);
         }
@@ -97,23 +117,36 @@ namespace erpv0._1.Controllers
                 try
                 {
                     var brand = await _context.Brands.FindAsync(id);
-                    if (brand == null) { return NotFound(); }
-                    brand.BrandName = brandViewModel.BrandName; // Update properties
+                    if (brand == null)
+                    {
+                        TempData["Error"] = "العلامة التجارية غير موجودة";
+                        return NotFound();
+                    }
+                    brand.BrandName = brandViewModel.BrandName;
                     _context.Update(brand);
                     await _context.SaveChangesAsync();
+                    TempData["Success"] = "تم تحديث العلامة التجارية بنجاح";
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!BrandExists(brandViewModel.BrandId))
                     {
+                        TempData["Error"] = "العلامة التجارية غير موجودة";
                         return NotFound();
                     }
                     else
                     {
+                        _logger.LogError("Concurrency error updating brand");
+                        TempData["Error"] = "حدث خطأ أثناء تحديث العلامة التجارية";
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Error updating brand with ID {id}");
+                    TempData["Error"] = "حدث خطأ أثناء تحديث العلامة التجارية";
+                }
             }
             return View(brandViewModel);
         }
@@ -142,13 +175,25 @@ namespace erpv0._1.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var brand = await _context.Brands.FindAsync(id);
-            if (brand != null)
+            try
             {
-                _context.Brands.Remove(brand);
+                var brand = await _context.Brands.FindAsync(id);
+                if (brand != null)
+                {
+                    _context.Brands.Remove(brand);
+                    await _context.SaveChangesAsync();
+                    TempData["Success"] = "تم حذف العلامة التجارية بنجاح";
+                }
+                else
+                {
+                    TempData["Error"] = "العلامة التجارية غير موجودة";
+                }
             }
-
-            await _context.SaveChangesAsync();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting brand with ID {id}");
+                TempData["Error"] = "حدث خطأ أثناء حذف العلامة التجارية. قد تكون مرتبطة بمنتجات أخرى";
+            }
             return RedirectToAction(nameof(Index));
         }
 

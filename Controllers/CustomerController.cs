@@ -22,16 +22,25 @@ namespace erpv0._1.Controllers
         // GET: Customers
         public async Task<IActionResult> Index()
         {
-            var customers = await _context.Customers.Select(c => new CustomerArabicViewModel
+            try
             {
-                CustomerId = c.CustomerId,
-                FullName = $"{c.FirstName} {c.LastName}",
-                Phone = c.Phone,
-                Email = c.Email,
-                Address = $"{c.Street}, {c.City}, {c.State}, {c.ZipCode}"
-            }).ToListAsync();
+                var customers = await _context.Customers.Select(c => new CustomerArabicViewModel
+                {
+                    CustomerId = c.CustomerId,
+                    FullName = $"{c.FirstName} {c.LastName}",
+                    Phone = c.Phone,
+                    Email = c.Email,
+                    Address = $"{c.Street}, {c.City}, {c.State}, {c.ZipCode}"
+                }).ToListAsync();
 
-            return View(customers);
+                return View(customers);
+            }
+            catch (Exception ex)
+            {
+                // Log the error (consider using a logging framework)
+                TempData["Error"] = "حدث خطأ أثناء جلب قائمة العملاء";
+                return View(new List<CustomerArabicViewModel>());
+            }
         }
 
         // GET: Customers/Details/5
@@ -74,9 +83,18 @@ namespace erpv0._1.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(customer);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    _context.Add(customer);
+                    await _context.SaveChangesAsync();
+                    TempData["Success"] = "تم إضافة العميل بنجاح";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    TempData["Error"] = "حدث خطأ أثناء إضافة العميل";
+                    return View(customer);
+                }
             }
             return View(customer);
         }
@@ -109,15 +127,27 @@ namespace erpv0._1.Controllers
                 {
                     _context.Update(customer);
                     await _context.SaveChangesAsync();
+                    TempData["Success"] = "تم تحديث بيانات العميل بنجاح";
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!_context.Customers.Any(e => e.CustomerId == customer.CustomerId))
+                    {
+                        TempData["Error"] = "العميل غير موجود";
                         return NotFound();
+                    }
                     else
+                    {
+                        TempData["Error"] = "حدث خطأ أثناء تحديث بيانات العميل";
                         throw;
+                    }
                 }
-                return RedirectToAction(nameof(Index));
+                catch (Exception ex)
+                {
+                    TempData["Error"] = "حدث خطأ أثناء تحديث بيانات العميل";
+                    return View(customer);
+                }
             }
             return View(customer);
         }
@@ -142,11 +172,23 @@ namespace erpv0._1.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var customer = await _context.Customers.FindAsync(id);
-            if (customer != null)
+            try
             {
-                _context.Customers.Remove(customer);
-                await _context.SaveChangesAsync();
+                var customer = await _context.Customers.FindAsync(id);
+                if (customer != null)
+                {
+                    _context.Customers.Remove(customer);
+                    await _context.SaveChangesAsync();
+                    TempData["Success"] = "تم حذف العميل بنجاح";
+                }
+                else
+                {
+                    TempData["Error"] = "العميل غير موجود";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "حدث خطأ أثناء حذف العميل. قد يكون مرتبطاً بطلبات أخرى";
             }
             return RedirectToAction(nameof(Index));
         }

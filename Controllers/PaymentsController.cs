@@ -19,6 +19,27 @@ namespace erpv0._1.Controllers
             _logger = logger;
         }
 
+        // GET: Payment
+        public async Task<IActionResult> Index()
+        {
+            try
+            {
+                var payments = await _context.Payments
+                    .Include(p => p.InvoiceNoNavigation)
+                        .ThenInclude(i => i.Supplier)
+                    .OrderByDescending(p => p.PaymentDate)
+                    .ToListAsync();
+
+                return View(payments);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving all payments");
+                TempData["Error"] = "حدث خطأ أثناء جلب قائمة المدفوعات";
+                return View(new List<Payment>());
+            }
+        }
+
         // GET: Payment/ByInvoice/5
         public async Task<IActionResult> ByInvoice(int? invoiceNo)
         {

@@ -265,14 +265,24 @@ namespace erpv0._1.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var supplier = await _context.Suppliers.FindAsync(id);
-            if (supplier == null)
+            try
             {
-                return NotFound();
-            }
+                var supplier = await _context.Suppliers.FindAsync(id);
+                if (supplier == null)
+                {
+                    TempData["Error"] = "المورد غير موجود";
+                    return NotFound();
+                }
 
-            _context.Suppliers.Remove(supplier);
-            await _context.SaveChangesAsync();
+                _context.Suppliers.Remove(supplier);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "تم حذف المورد بنجاح";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting supplier with ID {id}");
+                TempData["Error"] = "حدث خطأ أثناء حذف المورد. قد يكون مرتبطاً بفواتير أخرى";
+            }
             return RedirectToAction(nameof(Index));
         }
 

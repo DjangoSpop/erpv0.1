@@ -1,0 +1,306 @@
+@model IEnumerable<erpv0._1.Models.Payment>
+
+@{
+    ViewData["Title"] = "المدفوعات";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // Calculate statistics
+    var totalPayments = Model.Count();
+    var totalAmount = Model.Sum(p => p.Amount ?? 0);
+    var cashPayments = Model.Count(p => p.PaymentMethod == "Cash");
+    var pendingPayments = Model.Count(p => p.PaymentStatus == "Pending");
+}
+
+<div class="container-fluid mt-4" dir="rtl">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0"><i class="bi bi-credit-card me-2"></i>المدفوعات</h1>
+            <a asp-controller="Invoice" asp-action="Index" class="btn btn-light">
+                <i class="bi bi-receipt"></i> عرض الفواتير
+            </a>
+        </div>
+        <div class="card-body">
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-start border-primary border-4 shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs fw-bold text-primary text-uppercase mb-1">
+                                        إجمالي المدفوعات
+                                    </div>
+                                    <div class="h5 mb-0 fw-bold text-gray-800">@totalPayments</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="bi bi-cash-stack fs-2 text-muted"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-start border-success border-4 shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                                        إجمالي المبالغ
+                                    </div>
+                                    <div class="h5 mb-0 fw-bold text-gray-800">@totalAmount.ToString("C")</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="bi bi-currency-dollar fs-2 text-muted"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-start border-info border-4 shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs fw-bold text-info text-uppercase mb-1">
+                                        مدفوعات نقدية
+                                    </div>
+                                    <div class="h5 mb-0 fw-bold text-gray-800">@cashPayments</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="bi bi-wallet2 fs-2 text-muted"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-start border-warning border-4 shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs fw-bold text-warning text-uppercase mb-1">
+                                        مدفوعات معلقة
+                                    </div>
+                                    <div class="h5 mb-0 fw-bold text-gray-800">@pendingPayments</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="bi bi-clock-history fs-2 text-muted"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" id="searchInput" class="form-control" placeholder="بحث في المدفوعات...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select id="paymentMethodFilter" class="form-select">
+                        <option value="">كل طرق الدفع</option>
+                        <option value="Cash">نقدي</option>
+                        <option value="CreditCard">بطاقة ائتمان</option>
+                        <option value="BankTransfer">تحويل بنكي</option>
+                        <option value="Check">شيك</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select id="statusFilter" class="form-select">
+                        <option value="">كل الحالات</option>
+                        <option value="Pending">معلق</option>
+                        <option value="Completed">مكتمل</option>
+                        <option value="Cancelled">ملغي</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Payments Table -->
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle" id="paymentsTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>رقم الدفعة</th>
+                            <th>رقم الفاتورة</th>
+                            <th>المورد</th>
+                            <th>المبلغ</th>
+                            <th>طريقة الدفع</th>
+                            <th>تاريخ الدفع</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var payment in Model)
+                        {
+                            <tr>
+                                <td class="fw-bold">@payment.PaymentId</td>
+                                <td>
+                                    @if (payment.InvoiceNo.HasValue)
+                                    {
+                                        <a asp-controller="Invoice" asp-action="Details" asp-route-id="@payment.InvoiceNo" class="text-decoration-none">
+                                            #@payment.InvoiceNo
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">غير محدد</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (payment.InvoiceNoNavigation?.Supplier != null)
+                                    {
+                                        <span>@payment.InvoiceNoNavigation.Supplier.Name</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">غير محدد</span>
+                                    }
+                                </td>
+                                <td class="fw-bold text-success">@((payment.Amount ?? 0).ToString("C"))</td>
+                                <td>
+                                    @switch (payment.PaymentMethod)
+                                    {
+                                        case "Cash":
+                                            <span class="badge bg-success"><i class="bi bi-cash"></i> نقدي</span>
+                                            break;
+                                        case "CreditCard":
+                                            <span class="badge bg-primary"><i class="bi bi-credit-card"></i> بطاقة ائتمان</span>
+                                            break;
+                                        case "BankTransfer":
+                                            <span class="badge bg-info"><i class="bi bi-bank"></i> تحويل بنكي</span>
+                                            break;
+                                        case "Check":
+                                            <span class="badge bg-warning"><i class="bi bi-receipt"></i> شيك</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-secondary">@payment.PaymentMethod</span>
+                                            break;
+                                    }
+                                </td>
+                                <td>@payment.PaymentDate?.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    @switch (payment.PaymentStatus)
+                                    {
+                                        case "Pending":
+                                            <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> معلق</span>
+                                            break;
+                                        case "Completed":
+                                            <span class="badge bg-success"><i class="bi bi-check-circle"></i> مكتمل</span>
+                                            break;
+                                        case "Cancelled":
+                                            <span class="badge bg-danger"><i class="bi bi-x-circle"></i> ملغي</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-secondary">@payment.PaymentStatus</span>
+                                            break;
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        @if (payment.InvoiceNo.HasValue)
+                                        {
+                                            <a asp-action="ByInvoice" asp-route-invoiceNo="@payment.InvoiceNo" class="btn btn-sm btn-info" title="عرض مدفوعات الفاتورة">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        }
+                                        <a asp-action="Delete" asp-route-id="@payment.PaymentId" class="btn btn-sm btn-danger" title="حذف">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-info-circle fs-1 d-block mb-2"></i>
+                    <p class="mb-0">لا توجد مدفوعات مسجلة حالياً</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Search functionality
+            $('#searchInput').on('keyup', function () {
+                filterTable();
+            });
+
+            // Filter by payment method
+            $('#paymentMethodFilter').on('change', function () {
+                filterTable();
+            });
+
+            // Filter by status
+            $('#statusFilter').on('change', function () {
+                filterTable();
+            });
+
+            function filterTable() {
+                var searchValue = $('#searchInput').val().toLowerCase();
+                var methodFilter = $('#paymentMethodFilter').val().toLowerCase();
+                var statusFilter = $('#statusFilter').val().toLowerCase();
+
+                $('#paymentsTable tbody tr').filter(function () {
+                    var text = $(this).text().toLowerCase();
+                    var method = $(this).find('td:eq(4)').text().toLowerCase();
+                    var status = $(this).find('td:eq(6)').text().toLowerCase();
+
+                    var matchesSearch = text.indexOf(searchValue) > -1;
+                    var matchesMethod = methodFilter === '' || method.indexOf(methodFilter) > -1;
+                    var matchesStatus = statusFilter === '' || status.indexOf(statusFilter) > -1;
+
+                    $(this).toggle(matchesSearch && matchesMethod && matchesStatus);
+                });
+            }
+
+            // Delete confirmation
+            $('a[href*="Delete"]').on('click', function (e) {
+                if (!confirm('هل أنت متأكد من حذف هذه الدفعة؟')) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+}
+
+<style>
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+
+    .border-left-info {
+        border-left: 0.25rem solid #36b9cc !important;
+    }
+
+    .border-left-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 0, 0, 0.075);
+    }
+
+    .btn-group .btn {
+        margin: 0 2px;
+    }
+</style>
