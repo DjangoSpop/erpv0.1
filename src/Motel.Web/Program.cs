@@ -64,23 +64,26 @@ using (var scope = app.Services.CreateScope())
     try
     {
         // Ensure the AppData directory exists
-        var dbPath = builder.Configuration.GetConnectionString("Default");
-        if (dbPath != null && dbPath.Contains("AppData"))
+        var connectionString = builder.Configuration.GetConnectionString("Default");
+        if (!string.IsNullOrEmpty(connectionString) && connectionString.Contains("Data Source="))
         {
+            var dbPath = connectionString.Replace("Data Source=", "").Trim();
             var directory = Path.GetDirectoryName(dbPath);
+
             if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
-                logger.LogInformation("Created AppData directory");
+                logger.LogInformation("Created AppData directory at {Directory}", directory);
             }
         }
 
-        dbContext.Database.Migrate();
-        logger.LogInformation("Database migration completed successfully");
+        // Ensure database is created with migrations
+        dbContext.Database.EnsureCreated();
+        logger.LogInformation("Database initialized successfully");
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "An error occurred while migrating the database");
+        logger.LogError(ex, "An error occurred while initializing the database");
     }
 }
 
