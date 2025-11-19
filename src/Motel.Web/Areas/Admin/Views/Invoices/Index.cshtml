@@ -1,4 +1,5 @@
-@model IEnumerable<Motel.Application.DTOs.InvoiceDto>
+@model Motel.Web.ViewModels.Invoices.InvoiceListViewModel
+@using Motel.Domain.Enums
 @{
     ViewData["Title"] = "الفواتير";
 }
@@ -9,69 +10,221 @@
     </div>
 </div>
 
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>رقم الفاتورة</th>
-                        <th>النزيل</th>
-                        <th>الغرفة</th>
-                        <th>تاريخ الإصدار</th>
-                        <th>المبلغ الإجمالي</th>
-                        <th>الحالة</th>
-                        <th>إجراءات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="7" class="text-center text-muted">لا توجد فواتير</td>
-                        </tr>
-                    }
-                    else
-                    {
-                        @foreach (var invoice in Model.OrderByDescending(i => i.IssuedAtUtc))
-                        {
-                            var statusBadge = invoice.Status switch
-                            {
-                                Motel.Domain.Enums.InvoiceStatus.Paid => "bg-success",
-                                Motel.Domain.Enums.InvoiceStatus.Issued => "bg-warning",
-                                Motel.Domain.Enums.InvoiceStatus.Draft => "bg-secondary",
-                                Motel.Domain.Enums.InvoiceStatus.Cancelled => "bg-danger",
-                                _ => "bg-secondary"
-                            };
-                            var statusText = invoice.Status switch
-                            {
-                                Motel.Domain.Enums.InvoiceStatus.Paid => "مدفوعة",
-                                Motel.Domain.Enums.InvoiceStatus.Issued => "صادرة",
-                                Motel.Domain.Enums.InvoiceStatus.Draft => "مسودة",
-                                Motel.Domain.Enums.InvoiceStatus.Cancelled => "ملغاة",
-                                _ => invoice.Status.ToString()
-                            };
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-primary">
+            <div class="card-body">
+                <h6 class="text-muted">إجمالي الفواتير</h6>
+                <h3 class="mb-0">@Model.TotalInvoices</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-success">
+            <div class="card-body">
+                <h6 class="text-muted">فواتير مدفوعة</h6>
+                <h3 class="mb-0 text-success">@Model.PaidCount</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-warning">
+            <div class="card-body">
+                <h6 class="text-muted">فواتير صادرة</h6>
+                <h3 class="mb-0 text-warning">@Model.IssuedCount</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-info">
+            <div class="card-body">
+                <h6 class="text-muted">إجمالي الإيرادات</h6>
+                <h3 class="mb-0 text-success">@Model.TotalRevenueFormatted</h3>
+                <small class="text-muted">معلق: @Model.PendingRevenueFormatted</small>
+            </div>
+        </div>
+    </div>
+</div>
 
+<!-- Search and Filter Form -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-search"></i> البحث والتصفية</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" asp-action="Index">
+            <div class="row g-3">
+                <!-- Search Term -->
+                <div class="col-md-4">
+                    <label class="form-label">رقم الفاتورة أو النزيل</label>
+                    <input type="text" name="searchTerm" class="form-control"
+                           placeholder="ابحث برقم الفاتورة أو اسم النزيل..." value="@Model.SearchTerm" />
+                </div>
+
+                <!-- Status Filter -->
+                <div class="col-md-4">
+                    <label class="form-label">الحالة</label>
+                    <select name="filterByStatus" class="form-select">
+                        <option value="">الكل</option>
+                        @foreach (InvoiceStatus status in Enum.GetValues(typeof(InvoiceStatus)))
+                        {
+                            var selected = Model.FilterByStatus == status ? "selected" : "";
+                            var displayName = status switch
+                            {
+                                InvoiceStatus.Draft => "مسودة",
+                                InvoiceStatus.Issued => "صادرة",
+                                InvoiceStatus.Paid => "مدفوعة",
+                                InvoiceStatus.Cancelled => "ملغاة",
+                                InvoiceStatus.PartiallyPaid => "دفع جزئي",
+                                _ => status.ToString()
+                            };
+                            <option value="@((int)status)" @selected>@displayName</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Payment Method Filter -->
+                <div class="col-md-4">
+                    <label class="form-label">طريقة الدفع</label>
+                    <select name="filterByPaymentMethod" class="form-select">
+                        <option value="">الكل</option>
+                        @foreach (PaymentMethod method in Enum.GetValues(typeof(PaymentMethod)))
+                        {
+                            var selected = Model.FilterByPaymentMethod == method ? "selected" : "";
+                            var displayName = method switch
+                            {
+                                PaymentMethod.Cash => "نقداً",
+                                PaymentMethod.Card => "بطاقة ائتمان",
+                                PaymentMethod.BankTransfer => "تحويل بنكي",
+                                PaymentMethod.MobileWallet => "محفظة إلكترونية",
+                                _ => method.ToString()
+                            };
+                            <option value="@((int)method)" @selected>@displayName</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Date Filters -->
+                <div class="col-md-6">
+                    <label class="form-label">من تاريخ</label>
+                    <input type="date" name="filterFromDate" class="form-control"
+                           value="@Model.FilterFromDate?.ToString("yyyy-MM-dd")" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">إلى تاريخ</label>
+                    <input type="date" name="filterToDate" class="form-control"
+                           value="@Model.FilterToDate?.ToString("yyyy-MM-dd")" />
+                </div>
+
+                <!-- Buttons -->
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> بحث
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-arrow-clockwise"></i> إعادة تعيين
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Invoices Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-receipt"></i> الفواتير
+            @if (Model.Invoices.Any())
+            {
+                <span class="badge bg-primary">@Model.Invoices.Count()</span>
+            }
+        </h5>
+    </div>
+    <div class="card-body">
+        @if (Model.Invoices.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>رقم الفاتورة</th>
+                            <th>النزيل</th>
+                            <th>الغرفة</th>
+                            <th>الفترة</th>
+                            <th>تاريخ الإصدار</th>
+                            <th class="text-end">المبلغ</th>
+                            <th>الحالة</th>
+                            <th class="text-center">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var invoice in Model.Invoices.OrderByDescending(i => i.IssuedAt))
+                        {
                             <tr>
-                                <td><strong>@invoice.Serial</strong></td>
+                                <td>
+                                    <strong class="text-primary">@invoice.Serial</strong>
+                                </td>
                                 <td>@invoice.ClientName</td>
                                 <td>@invoice.RoomNumber</td>
-                                <td>@invoice.IssuedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-                                <td class="text-success fw-bold">@invoice.Total.ToString("N2") ج.م</td>
-                                <td><span class="badge @statusBadge">@statusText</span></td>
                                 <td>
-                                    <a asp-action="Details" asp-route-id="@invoice.Id" class="btn btn-sm btn-info">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                    <a asp-action="Print" asp-route-id="@invoice.Id" target="_blank" class="btn btn-sm btn-secondary">
-                                        <i class="bi bi-printer"></i>
-                                    </a>
+                                    <small>
+                                        @invoice.CheckInDateFormatted<br/>
+                                        إلى @invoice.CheckOutDateFormatted
+                                    </small>
+                                </td>
+                                <td>
+                                    <small>@invoice.IssuedAtFormatted</small>
+                                </td>
+                                <td class="text-end">
+                                    <strong class="text-success">@invoice.TotalFormatted</strong>
+                                </td>
+                                <td>
+                                    <span class="badge @invoice.StatusBadgeClass">
+                                        @invoice.StatusDisplay
+                                    </span>
+                                    @if (invoice.PaymentMethod.HasValue)
+                                    {
+                                        <br/><small class="text-muted">@invoice.PaymentMethodDisplay</small>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a asp-action="Details" asp-route-id="@invoice.Id"
+                                           class="btn btn-sm btn-info" title="عرض التفاصيل">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        @if (invoice.CanPrint)
+                                        {
+                                            <a asp-action="Print" asp-route-id="@invoice.Id" target="_blank"
+                                               class="btn btn-sm btn-secondary" title="طباعة">
+                                                <i class="bi bi-printer"></i>
+                                            </a>
+                                        }
+                                        @if (invoice.CanPay)
+                                        {
+                                            <a asp-action="Details" asp-route-id="@invoice.Id"
+                                               class="btn btn-sm btn-success" title="تسجيل الدفع">
+                                                <i class="bi bi-cash"></i>
+                                            </a>
+                                        }
+                                    </div>
                                 </td>
                             </tr>
                         }
-                    }
-                </tbody>
-            </table>
-        </div>
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info text-center">
+                <i class="bi bi-info-circle"></i>
+                لا توجد فواتير تطابق معايير البحث. جرب تغيير الفلاتر أو
+                <a asp-action="Index" class="alert-link">إعادة تعيين البحث</a>.
+            </div>
+        }
     </div>
 </div>

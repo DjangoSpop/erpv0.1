@@ -27,6 +27,8 @@ public class InvoiceDetailViewModel
     public string RoomNumber { get; set; } = default!;
     public DateOnly CheckInDate { get; set; }
     public DateOnly CheckOutDate { get; set; }
+    public string CheckInDateFormatted { get; set; } = default!;
+    public string CheckOutDateFormatted { get; set; } = default!;
     public int NumberOfNights { get; set; }
     public int Guests { get; set; }
 
@@ -66,6 +68,7 @@ public class InvoiceDetailViewModel
 public class InvoiceLineItem
 {
     public string Description { get; set; } = default!;
+    public string? Details { get; set; }
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal Amount { get; set; }

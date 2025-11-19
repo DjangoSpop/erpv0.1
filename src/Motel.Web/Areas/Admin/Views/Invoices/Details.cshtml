@@ -1,135 +1,181 @@
-@model Motel.Application.DTOs.InvoiceDto
+@model Motel.Web.ViewModels.Invoices.InvoiceDetailViewModel
+@using Motel.Domain.Enums
 @{
     ViewData["Title"] = "تفاصيل الفاتورة";
 }
 
 <div class="row">
-    <div class="col-md-8 offset-md-2">
+    <div class="col-md-10 offset-md-1">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2>تفاصيل الفاتورة</h2>
             <div>
-                <a asp-action="Print" asp-route-id="@Model.Id" target="_blank" class="btn btn-secondary">
-                    <i class="bi bi-printer"></i> طباعة
-                </a>
+                <h2>تفاصيل الفاتورة</h2>
+                <span class="badge @Model.StatusBadgeClass fs-6">@Model.StatusDisplay</span>
+            </div>
+            <div>
+                @if (Model.CanPrint)
+                {
+                    <a asp-action="Print" asp-route-id="@Model.Id" target="_blank" class="btn btn-secondary">
+                        <i class="bi bi-printer"></i> طباعة
+                    </a>
+                }
                 <a asp-action="Index" class="btn btn-secondary">
                     <i class="bi bi-arrow-right"></i> رجوع
                 </a>
             </div>
         </div>
 
+        <!-- Invoice Header -->
         <div class="card mb-3">
             <div class="card-header bg-primary text-white">
                 <div class="d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-receipt"></i> فاتورة رقم: @Model.Serial</h5>
-                    @if (Model.Status == Motel.Domain.Enums.InvoiceStatus.Paid)
-                    {
-                        <span class="badge bg-success fs-6">مدفوعة</span>
-                    }
-                    else if (Model.Status == Motel.Domain.Enums.InvoiceStatus.Issued)
-                    {
-                        <span class="badge bg-warning fs-6">صادرة</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-secondary fs-6">@Model.Status</span>
-                    }
+                    <span class="badge bg-light text-dark">@Model.IssuedAtFormatted</span>
                 </div>
             </div>
             <div class="card-body">
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <h6 class="text-muted">معلومات النزيل</h6>
-                        <p class="mb-1"><strong>الاسم:</strong> @Model.ClientName</p>
-                        <p class="mb-1"><strong>الغرفة:</strong> @Model.RoomNumber</p>
-                        <p class="mb-0"><strong>الفترة:</strong> من @Model.CheckInDate.ToString("dd/MM/yyyy") إلى @Model.CheckOutDate.ToString("dd/MM/yyyy")</p>
+                        <h6 class="text-muted mb-3">معلومات النزيل</h6>
+                        <p class="mb-1"><i class="bi bi-person"></i> <strong>الاسم:</strong> @Model.ClientName</p>
+                        <p class="mb-1"><i class="bi bi-door-open"></i> <strong>الغرفة:</strong> @Model.RoomNumber</p>
+                        <p class="mb-1"><i class="bi bi-calendar3"></i> <strong>الدخول:</strong> @Model.CheckInDateFormatted</p>
+                        <p class="mb-0"><i class="bi bi-calendar-x"></i> <strong>الخروج:</strong> @Model.CheckOutDateFormatted</p>
+                        <p class="mt-2 text-muted"><small><i class="bi bi-moon"></i> عدد الليالي: @Model.NumberOfNights</small></p>
                     </div>
                     <div class="col-md-6 text-end">
-                        <h6 class="text-muted">معلومات الفاتورة</h6>
-                        <p class="mb-1"><strong>تاريخ الإصدار:</strong> @Model.IssuedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
-                        @if (Model.PaidAtUtc.HasValue)
+                        <h6 class="text-muted mb-3">معلومات الفاتورة</h6>
+                        <p class="mb-1"><strong>تاريخ الإصدار:</strong> @Model.IssuedAtFormatted</p>
+                        @if (Model.PaidAt.HasValue)
                         {
-                            <p class="mb-0"><strong>تاريخ الدفع:</strong> @Model.PaidAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+                            <p class="mb-0 text-success"><strong>تاريخ الدفع:</strong> @Model.PaidAtFormatted</p>
+                        }
+                        @if (Model.PaymentMethod.HasValue)
+                        {
+                            <p class="mt-2"><strong>طريقة الدفع:</strong> @Model.PaymentMethodDisplay</p>
                         }
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <hr />
-
+        <!-- Invoice Line Items -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-list-ul"></i> تفاصيل الفاتورة</h5>
+            </div>
+            <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table">
-                        <thead>
+                    <table class="table table-borderless">
+                        <thead class="table-light">
                             <tr>
                                 <th>البيان</th>
+                                <th class="text-center">الكمية</th>
+                                <th class="text-end">السعر</th>
                                 <th class="text-end">المبلغ</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>المجموع الفرعي</td>
-                                <td class="text-end">@Model.Subtotal.ToString("N2") ج.م</td>
-                            </tr>
-                            <tr>
-                                <td>ضريبة القيمة المضافة (@Model.TaxPercent%)</td>
-                                <td class="text-end">@Model.TaxAmount.ToString("N2") ج.م</td>
-                            </tr>
-                            <tr class="table-primary fw-bold">
-                                <td>الإجمالي</td>
-                                <td class="text-end text-success fs-5">@Model.Total.ToString("N2") ج.م</td>
-                            </tr>
+                            @foreach (var lineItem in Model.LineItems)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@lineItem.Description</strong>
+                                        @if (!string.IsNullOrEmpty(lineItem.Details))
+                                        {
+                                            <br/><small class="text-muted">@lineItem.Details</small>
+                                        }
+                                    </td>
+                                    <td class="text-center">@lineItem.Quantity</td>
+                                    <td class="text-end">@lineItem.UnitPrice.ToString("N2") ج.م</td>
+                                    <td class="text-end"><strong>@lineItem.AmountFormatted</strong></td>
+                                </tr>
+                            }
                         </tbody>
+                        <tfoot>
+                            <tr class="table-light">
+                                <td colspan="3" class="text-end"><strong>المجموع الفرعي:</strong></td>
+                                <td class="text-end"><strong>@Model.SubtotalFormatted</strong></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end">ضريبة القيمة المضافة (@Model.TaxPercent%):</td>
+                                <td class="text-end">@Model.TaxAmountFormatted</td>
+                            </tr>
+                            <tr class="table-primary">
+                                <td colspan="3" class="text-end"><strong class="fs-5">الإجمالي:</strong></td>
+                                <td class="text-end"><strong class="text-success fs-4">@Model.TotalFormatted</strong></td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
-
-                @if (Model.Status == Motel.Domain.Enums.InvoiceStatus.Paid && Model.PaymentMethod.HasValue)
-                {
-                    <div class="alert alert-success mt-3">
-                        <strong><i class="bi bi-check-circle"></i> تم الدفع بنجاح</strong><br />
-                        <strong>طريقة الدفع:</strong>
-                        @switch (Model.PaymentMethod.Value)
-                        {
-                            case Motel.Domain.Enums.PaymentMethod.Cash:
-                                <span>نقداً</span>
-                                break;
-                            case Motel.Domain.Enums.PaymentMethod.Card:
-                                <span>بطاقة ائتمان</span>
-                                break;
-                            case Motel.Domain.Enums.PaymentMethod.BankTransfer:
-                                <span>تحويل بنكي</span>
-                                break;
-                            case Motel.Domain.Enums.PaymentMethod.MobileWallet:
-                                <span>محفظة إلكترونية</span>
-                                break;
-                        }
-                    </div>
-                }
             </div>
         </div>
 
-        @if (Model.Status == Motel.Domain.Enums.InvoiceStatus.Issued)
+        <!-- Payment Status -->
+        @if (Model.Status == InvoiceStatus.Paid && Model.PaymentMethod.HasValue)
         {
-            <div class="card">
+            <div class="alert alert-success">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-check-circle fs-3 me-3"></i>
+                    <div>
+                        <strong>تم الدفع بنجاح</strong>
+                        <br/>
+                        <small>طريقة الدفع: @Model.PaymentMethodDisplay | تاريخ الدفع: @Model.PaidAtFormatted</small>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Payment Form (if Issued) -->
+        @if (Model.CanPay && Model.Status == InvoiceStatus.Issued)
+        {
+            <div class="card border-warning">
                 <div class="card-header bg-warning">
-                    <h5 class="mb-0">تسجيل الدفع</h5>
+                    <h5 class="mb-0"><i class="bi bi-cash-stack"></i> تسجيل الدفع</h5>
                 </div>
                 <div class="card-body">
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>المبلغ المستحق:</strong> @Model.TotalFormatted
+                    </div>
+
                     <form asp-action="MarkPaid" asp-route-id="@Model.Id" method="post" class="row g-3">
                         @Html.AntiForgeryToken()
                         <div class="col-md-8">
-                            <label class="form-label">طريقة الدفع</label>
-                            <select name="paymentMethod" class="form-select" required>
+                            <label class="form-label"><i class="bi bi-credit-card"></i> طريقة الدفع *</label>
+                            <select name="paymentMethod" class="form-select form-select-lg" required>
                                 <option value="">-- اختر طريقة الدفع --</option>
-                                <option value="@((int)Motel.Domain.Enums.PaymentMethod.Cash)">نقداً</option>
-                                <option value="@((int)Motel.Domain.Enums.PaymentMethod.Card)">بطاقة ائتمان</option>
-                                <option value="@((int)Motel.Domain.Enums.PaymentMethod.BankTransfer)">تحويل بنكي</option>
-                                <option value="@((int)Motel.Domain.Enums.PaymentMethod.MobileWallet)">محفظة إلكترونية</option>
+                                <option value="@((int)PaymentMethod.Cash)">💵 نقداً</option>
+                                <option value="@((int)PaymentMethod.Card)">💳 بطاقة ائتمان</option>
+                                <option value="@((int)PaymentMethod.BankTransfer)">🏦 تحويل بنكي</option>
+                                <option value="@((int)PaymentMethod.MobileWallet)">📱 محفظة إلكترونية</option>
                             </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label d-block">&nbsp;</label>
-                            <button type="submit" class="btn btn-success w-100">
-                                <i class="bi bi-check-circle"></i> تسجيل الدفع
+                            <button type="submit" class="btn btn-success btn-lg w-100">
+                                <i class="bi bi-check-circle"></i> تأكيد الدفع
                             </button>
                         </div>
+                    </form>
+                </div>
+            </div>
+        }
+
+        <!-- Action Buttons -->
+        @if (Model.CanCancel)
+        {
+            <div class="card border-danger mt-3">
+                <div class="card-header bg-danger text-white">
+                    <h6 class="mb-0"><i class="bi bi-exclamation-triangle"></i> إجراءات خطرة</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">إلغاء الفاتورة سيؤدي إلى عدم إمكانية تحصيلها.</p>
+                    <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" class="d-inline"
+                          onsubmit="return confirm('هل أنت متأكد من إلغاء هذه الفاتورة؟ لا يمكن التراجع عن هذا الإجراء.')">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="bi bi-x-circle"></i> إلغاء الفاتورة
+                        </button>
                     </form>
                 </div>
             </div>

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Motel.Application.Interfaces;
 using Motel.Domain.Enums;
+using Motel.Web.Extensions;
+using Motel.Web.ViewModels.Invoices;
 
 namespace Motel.Web.Areas.Admin.Controllers;
 
@@ -14,10 +16,52 @@ public class InvoicesController : Controller
         _invoicesService = invoicesService;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(
+        string? searchTerm,
+        InvoiceStatus? filterByStatus,
+        DateOnly? filterFromDate,
+        DateOnly? filterToDate,
+        PaymentMethod? filterByPaymentMethod)
     {
         var invoices = await _invoicesService.GetAllAsync();
-        return View(invoices);
+
+        // Apply filters
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            invoices = invoices.Where(i =>
+                i.Serial.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                i.ClientName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                i.RoomNumber.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (filterByStatus.HasValue)
+        {
+            invoices = invoices.Where(i => i.Status == filterByStatus.Value);
+        }
+
+        if (filterFromDate.HasValue)
+        {
+            invoices = invoices.Where(i => i.IssuedAtUtc.Date >= filterFromDate.Value.ToDateTime(TimeOnly.MinValue));
+        }
+
+        if (filterToDate.HasValue)
+        {
+            invoices = invoices.Where(i => i.IssuedAtUtc.Date <= filterToDate.Value.ToDateTime(TimeOnly.MinValue));
+        }
+
+        if (filterByPaymentMethod.HasValue)
+        {
+            invoices = invoices.Where(i => i.PaymentMethod == filterByPaymentMethod.Value);
+        }
+
+        var viewModel = invoices.ToListViewModel(
+            searchTerm,
+            filterByStatus,
+            filterFromDate,
+            filterToDate,
+            filterByPaymentMethod);
+
+        return View(viewModel);
     }
 
     public async Task<IActionResult> Details(Guid id)
@@ -26,7 +70,8 @@ public class InvoicesController : Controller
         if (invoice == null)
             return NotFound();
 
-        return View(invoice);
+        var viewModel = invoice.ToDetailViewModel();
+        return View(viewModel);
     }
 
     public async Task<IActionResult> Print(Guid id)
