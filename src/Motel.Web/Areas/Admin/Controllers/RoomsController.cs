@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Motel.Application.DTOs;
 using Motel.Application.Interfaces;
+using Motel.Domain.Enums;
+using Motel.Web.Extensions;
+using Motel.Web.ViewModels.Rooms;
 
 namespace Motel.Web.Areas.Admin.Controllers;
 
@@ -14,10 +17,69 @@ public class RoomsController : Controller
         _roomsService = roomsService;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(
+        string? searchTerm,
+        RoomType? filterByType,
+        RoomStatus? filterByStatus,
+        int? minCapacity,
+        decimal? maxPrice,
+        DateOnly? availabilityFromDate,
+        DateOnly? availabilityToDate,
+        int? requiredGuests)
     {
-        var rooms = await _roomsService.GetAllAsync();
-        return View(rooms);
+        IEnumerable<RoomDto> rooms;
+
+        // Check if we need to filter by availability dates
+        if (availabilityFromDate.HasValue && availabilityToDate.HasValue)
+        {
+            var guests = requiredGuests ?? 1;
+            rooms = await _roomsService.GetAvailableRoomsAsync(
+                availabilityFromDate.Value,
+                availabilityToDate.Value,
+                guests);
+        }
+        else
+        {
+            rooms = await _roomsService.GetAllAsync();
+        }
+
+        // Apply additional filters
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            rooms = rooms.Where(r => r.Number.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (filterByType.HasValue)
+        {
+            rooms = rooms.Where(r => r.Type == filterByType.Value);
+        }
+
+        if (filterByStatus.HasValue)
+        {
+            rooms = rooms.Where(r => r.Status == filterByStatus.Value);
+        }
+
+        if (minCapacity.HasValue)
+        {
+            rooms = rooms.Where(r => r.Capacity >= minCapacity.Value);
+        }
+
+        if (maxPrice.HasValue)
+        {
+            rooms = rooms.Where(r => r.BaseNightlyRate <= maxPrice.Value);
+        }
+
+        var viewModel = rooms.ToListViewModel(
+            searchTerm,
+            filterByType,
+            filterByStatus,
+            minCapacity,
+            maxPrice,
+            availabilityFromDate,
+            availabilityToDate,
+            requiredGuests);
+
+        return View(viewModel);
     }
 
     public IActionResult Create()

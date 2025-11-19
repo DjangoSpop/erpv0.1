@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Motel.Application.DTOs;
 using Motel.Application.Interfaces;
+using Motel.Domain.Enums;
+using Motel.Web.Extensions;
+using Motel.Web.ViewModels.Reservations;
 
 namespace Motel.Web.Areas.Admin.Controllers;
 
@@ -81,44 +84,106 @@ public class ReservationsController : Controller
         if (reservation == null)
             return NotFound();
 
-        var invoice = await _invoicesService.GetByReservationIdAsync(id);
-        ViewBag.Invoice = invoice;
+        var viewModel = reservation.ToDetailViewModel();
 
-        return View(reservation);
+        // Check if invoice exists
+        var invoice = await _invoicesService.GetByReservationIdAsync(id);
+        if (invoice != null)
+        {
+            viewModel.InvoiceId = invoice.Id;
+            viewModel.InvoiceSerial = invoice.Serial;
+        }
+
+        return View(viewModel);
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
+    // GET: CheckIn form
     public async Task<IActionResult> CheckIn(Guid id)
     {
-        try
+        var reservation = await _reservationsService.GetByIdAsync(id);
+        if (reservation == null)
+            return NotFound();
+
+        if (reservation.Status != ReservationStatus.Confirmed)
         {
-            await _reservationsService.CheckInAsync(id);
-            TempData["Success"] = "تم تسجيل الدخول بنجاح";
-        }
-        catch (Exception ex)
-        {
-            TempData["Error"] = ex.Message;
+            TempData["Error"] = "لا يمكن تسجيل الدخول لهذا الحجز في حالته الحالية";
+            return RedirectToAction(nameof(Details), new { id });
         }
 
-        return RedirectToAction(nameof(Details), new { id });
+        var viewModel = reservation.ToCheckInViewModel();
+        return View(viewModel);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CheckOut(Guid id, decimal? extraCharges)
+    public async Task<IActionResult> CheckIn(CheckInViewModel model)
     {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
         try
         {
-            await _reservationsService.CheckOutAsync(id, extraCharges);
-            TempData["Success"] = "تم تسجيل الخروج بنجاح";
+            // For now, use the simple CheckInAsync from service
+            // In future, we can enhance the service to accept the full model
+            await _reservationsService.CheckInAsync(model.ReservationId);
+
+            // TODO: Store additional check-in details (documents, special requests, etc.)
+
+            TempData["Success"] = "تم تسجيل الدخول بنجاح";
+            return RedirectToAction(nameof(Details), new { id = model.ReservationId });
         }
         catch (Exception ex)
         {
-            TempData["Error"] = ex.Message;
+            ModelState.AddModelError("", ex.Message);
+            return View(model);
+        }
+    }
+
+    // GET: CheckOut form
+    public async Task<IActionResult> CheckOut(Guid id)
+    {
+        var reservation = await _reservationsService.GetByIdAsync(id);
+        if (reservation == null)
+            return NotFound();
+
+        if (reservation.Status != ReservationStatus.CheckedIn)
+        {
+            TempData["Error"] = "لا يمكن تسجيل الخروج لهذا الحجز في حالته الحالية";
+            return RedirectToAction(nameof(Details), new { id });
         }
 
-        return RedirectToAction(nameof(Details), new { id });
+        var viewModel = reservation.ToCheckOutViewModel();
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CheckOut(CheckOutViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        try
+        {
+            // Calculate total extra charges
+            var totalExtraCharges = model.TotalExtraCharges;
+
+            await _reservationsService.CheckOutAsync(model.ReservationId, totalExtraCharges);
+
+            // TODO: Store detailed checkout information
+
+            TempData["Success"] = "تم تسجيل الخروج بنجاح";
+            return RedirectToAction(nameof(Details), new { id = model.ReservationId });
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError("", ex.Message);
+            return View(model);
+        }
     }
 
     private async Task PopulateDropdowns()

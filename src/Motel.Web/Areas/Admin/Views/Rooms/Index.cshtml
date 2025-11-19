@@ -1,4 +1,5 @@
-@model IEnumerable<Motel.Application.DTOs.RoomDto>
+@model Motel.Web.ViewModels.Rooms.RoomListViewModel
+@using Motel.Domain.Enums
 @{
     ViewData["Title"] = "الغرف";
 }
@@ -14,65 +15,236 @@
     </div>
 </div>
 
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>رقم الغرفة</th>
-                        <th>النوع</th>
-                        <th>السعة</th>
-                        <th>السعر / ليلة</th>
-                        <th>الحالة</th>
-                        <th>إجراءات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var room in Model)
-                    {
-                        var statusBadge = room.Status switch
-                        {
-                            Motel.Domain.Enums.RoomStatus.Available => "bg-success",
-                            Motel.Domain.Enums.RoomStatus.Occupied => "bg-danger",
-                            Motel.Domain.Enums.RoomStatus.Reserved => "bg-warning",
-                            Motel.Domain.Enums.RoomStatus.OutOfService => "bg-secondary",
-                            _ => "bg-secondary"
-                        };
-                        var statusText = room.Status switch
-                        {
-                            Motel.Domain.Enums.RoomStatus.Available => "متاحة",
-                            Motel.Domain.Enums.RoomStatus.Occupied => "مشغولة",
-                            Motel.Domain.Enums.RoomStatus.Reserved => "محجوزة",
-                            Motel.Domain.Enums.RoomStatus.OutOfService => "خارج الخدمة",
-                            _ => room.Status.ToString()
-                        };
-
-                        <tr>
-                            <td><strong>@room.Number</strong></td>
-                            <td>@room.Type</td>
-                            <td>@room.Capacity شخص</td>
-                            <td>@room.BaseNightlyRate.ToString("N2") ج.م</td>
-                            <td><span class="badge @statusBadge">@statusText</span></td>
-                            <td>
-                                <a asp-action="Details" asp-route-id="@room.Id" class="btn btn-sm btn-info">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                <a asp-action="Edit" asp-route-id="@room.Id" class="btn btn-sm btn-warning">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <form asp-action="Delete" asp-route-id="@room.Id" method="post" class="d-inline"
-                                      onsubmit="return confirm('هل أنت متأكد من حذف هذه الغرفة؟')">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-sm btn-danger">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-primary">
+            <div class="card-body">
+                <h6 class="text-muted">إجمالي الغرف</h6>
+                <h3 class="mb-0">@Model.TotalRooms</h3>
+            </div>
         </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-success">
+            <div class="card-body">
+                <h6 class="text-muted">الغرف المتاحة</h6>
+                <h3 class="mb-0 text-success">@Model.AvailableRooms</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-danger">
+            <div class="card-body">
+                <h6 class="text-muted">الغرف المشغولة</h6>
+                <h3 class="mb-0 text-danger">@Model.OccupiedRooms</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-warning">
+            <div class="card-body">
+                <h6 class="text-muted">الغرف المحجوزة</h6>
+                <h3 class="mb-0 text-warning">@Model.ReservedRooms</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter Form -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-search"></i> البحث والتصفية</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" asp-action="Index">
+            <div class="row g-3">
+                <!-- Search Term -->
+                <div class="col-md-4">
+                    <label class="form-label">رقم الغرفة</label>
+                    <input type="text" name="searchTerm" class="form-control"
+                           placeholder="ابحث برقم الغرفة..." value="@Model.SearchTerm" />
+                </div>
+
+                <!-- Room Type Filter -->
+                <div class="col-md-4">
+                    <label class="form-label">نوع الغرفة</label>
+                    <select name="filterByType" class="form-select">
+                        <option value="">الكل</option>
+                        @foreach (RoomType type in Enum.GetValues(typeof(RoomType)))
+                        {
+                            var selected = Model.FilterByType == type ? "selected" : "";
+                            var displayName = type switch
+                            {
+                                RoomType.Single => "فردية",
+                                RoomType.Double => "مزدوجة",
+                                RoomType.Twin => "توأم",
+                                RoomType.Triple => "ثلاثية",
+                                RoomType.Family => "عائلية",
+                                RoomType.Suite => "جناح",
+                                RoomType.Chalet => "شاليه",
+                                RoomType.Dorm => "عنبر",
+                                _ => type.ToString()
+                            };
+                            <option value="@((int)type)" @selected>@displayName</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Room Status Filter -->
+                <div class="col-md-4">
+                    <label class="form-label">الحالة</label>
+                    <select name="filterByStatus" class="form-select">
+                        <option value="">الكل</option>
+                        @foreach (RoomStatus status in Enum.GetValues(typeof(RoomStatus)))
+                        {
+                            var selected = Model.FilterByStatus == status ? "selected" : "";
+                            var displayName = status switch
+                            {
+                                RoomStatus.Available => "متاحة",
+                                RoomStatus.Occupied => "مشغولة",
+                                RoomStatus.Reserved => "محجوزة",
+                                RoomStatus.OutOfService => "خارج الخدمة",
+                                RoomStatus.Maintenance => "صيانة",
+                                _ => status.ToString()
+                            };
+                            <option value="@((int)status)" @selected>@displayName</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Capacity Filter -->
+                <div class="col-md-3">
+                    <label class="form-label">الحد الأدنى للسعة</label>
+                    <input type="number" name="minCapacity" class="form-control"
+                           placeholder="عدد الأشخاص" min="1" value="@Model.MinCapacity" />
+                </div>
+
+                <!-- Price Filter -->
+                <div class="col-md-3">
+                    <label class="form-label">أقصى سعر (ج.م)</label>
+                    <input type="number" name="maxPrice" class="form-control"
+                           placeholder="السعر الأقصى" step="0.01" value="@Model.MaxPrice" />
+                </div>
+
+                <!-- Availability Dates -->
+                <div class="col-md-3">
+                    <label class="form-label">تاريخ الدخول</label>
+                    <input type="date" name="availabilityFromDate" class="form-control"
+                           value="@Model.AvailabilityFromDate?.ToString("yyyy-MM-dd")" />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">تاريخ الخروج</label>
+                    <input type="date" name="availabilityToDate" class="form-control"
+                           value="@Model.AvailabilityToDate?.ToString("yyyy-MM-dd")" />
+                </div>
+
+                <!-- Number of Guests for availability search -->
+                @if (Model.AvailabilityFromDate.HasValue || Model.AvailabilityToDate.HasValue)
+                {
+                    <div class="col-md-3">
+                        <label class="form-label">عدد النزلاء</label>
+                        <input type="number" name="requiredGuests" class="form-control"
+                               placeholder="عدد النزلاء" min="1" value="@Model.RequiredGuests" />
+                    </div>
+                }
+
+                <!-- Buttons -->
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> بحث
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-arrow-clockwise"></i> إعادة تعيين
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Rooms Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-list"></i> الغرف
+            @if (Model.Rooms.Any())
+            {
+                <span class="badge bg-primary">@Model.Rooms.Count()</span>
+            }
+        </h5>
+    </div>
+    <div class="card-body">
+        @if (Model.Rooms.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>رقم الغرفة</th>
+                            <th>النوع</th>
+                            <th>السعة</th>
+                            <th>السعر / ليلة</th>
+                            <th>الحالة</th>
+                            <th class="text-center">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var room in Model.Rooms)
+                        {
+                            <tr>
+                                <td>
+                                    <strong class="text-primary">@room.Number</strong>
+                                    @if (!string.IsNullOrEmpty(room.Notes))
+                                    {
+                                        <i class="bi bi-info-circle text-muted" title="@room.Notes"></i>
+                                    }
+                                </td>
+                                <td>@room.TypeDisplay</td>
+                                <td>
+                                    <i class="bi bi-people"></i> @room.Capacity
+                                </td>
+                                <td>
+                                    <strong>@room.FormattedRate</strong>
+                                </td>
+                                <td>
+                                    <span class="badge @room.StatusBadgeClass">
+                                        @room.StatusDisplay
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a asp-action="Details" asp-route-id="@room.Id"
+                                           class="btn btn-sm btn-info" title="عرض التفاصيل">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@room.Id"
+                                           class="btn btn-sm btn-warning" title="تعديل">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <form asp-action="Delete" asp-route-id="@room.Id" method="post" class="d-inline"
+                                              onsubmit="return confirm('هل أنت متأكد من حذف هذه الغرفة؟')">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-danger" title="حذف">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info text-center">
+                <i class="bi bi-info-circle"></i>
+                لا توجد غرف تطابق معايير البحث. جرب تغيير الفلاتر أو
+                <a asp-action="Index" class="alert-link">إعادة تعيين البحث</a>.
+            </div>
+        }
     </div>
 </div>

@@ -1,0 +1,277 @@
+@model Motel.Web.ViewModels.Reservations.CheckOutViewModel
+@{
+    ViewData["Title"] = "تسجيل الخروج";
+}
+
+<div class="row mb-3">
+    <div class="col">
+        <h2><i class="bi bi-box-arrow-right"></i> تسجيل خروج الحجز</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">الحجوزات</a></li>
+                <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.ReservationId">تفاصيل</a></li>
+                <li class="breadcrumb-item active">تسجيل الخروج</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Reservation Summary -->
+<div class="card mb-4 border-info">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="bi bi-info-circle"></i> معلومات الحجز</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <strong>النزيل:</strong> @Model.ClientName
+            </div>
+            <div class="col-md-4">
+                <strong>رقم الغرفة:</strong> @Model.RoomNumber
+            </div>
+            <div class="col-md-4">
+                <strong>تاريخ الخروج المجدول:</strong> @Model.ScheduledCheckOutDate.ToString("dd/MM/yyyy")
+            </div>
+        </div>
+        @if (Model.IsLateCheckOut)
+        {
+            <div class="alert alert-warning mt-3 mb-0">
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>تنبيه:</strong> خروج متأخر. الوقت المجدول: @Model.ScheduledCheckOutTime.ToString("hh:mm tt")
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Check-Out Form -->
+<form asp-action="CheckOut" method="post" id="checkoutForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="ReservationId" />
+    <input type="hidden" asp-for="ClientName" />
+    <input type="hidden" asp-for="RoomNumber" />
+    <input type="hidden" asp-for="ScheduledCheckOutDate" />
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-calendar-x"></i> بيانات تسجيل الخروج</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- Actual Check-Out Time -->
+                <div class="col-md-6">
+                    <label asp-for="ActualCheckOutTime" class="form-label">
+                        وقت تسجيل الخروج الفعلي <span class="text-danger">*</span>
+                    </label>
+                    <input asp-for="ActualCheckOutTime" type="datetime-local" class="form-control" />
+                    <span asp-validation-for="ActualCheckOutTime" class="text-danger"></span>
+                </div>
+
+                <!-- Room Condition -->
+                <div class="col-md-6">
+                    <label asp-for="RoomCondition" class="form-label">حالة الغرفة</label>
+                    <select asp-for="RoomCondition" class="form-select">
+                        <option value="ممتازة">ممتازة</option>
+                        <option value="جيدة" selected>جيدة</option>
+                        <option value="مقبولة">مقبولة</option>
+                        <option value="تحتاج صيانة">تحتاج صيانة</option>
+                        <option value="تضررت">تضررت</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Charges -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-cash-stack"></i> الرسوم الإضافية</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- Mini Bar Charges -->
+                <div class="col-md-6">
+                    <label asp-for="MiniBarCharges" class="form-label">
+                        <i class="bi bi-cup-straw"></i> رسوم المشروبات (ج.م)
+                    </label>
+                    <input asp-for="MiniBarCharges" type="number" class="form-control charge-input"
+                           step="0.01" min="0" placeholder="0.00" />
+                    <span asp-validation-for="MiniBarCharges" class="text-danger"></span>
+                </div>
+
+                <!-- Service Charges -->
+                <div class="col-md-6">
+                    <label asp-for="ServiceCharges" class="form-label">
+                        <i class="bi bi-concierge"></i> رسوم خدمات إضافية (ج.م)
+                    </label>
+                    <input asp-for="ServiceCharges" type="number" class="form-control charge-input"
+                           step="0.01" min="0" placeholder="0.00" />
+                    <span asp-validation-for="ServiceCharges" class="text-danger"></span>
+                </div>
+
+                <!-- Damage Charges -->
+                <div class="col-md-6">
+                    <label asp-for="DamageCharges" class="form-label">
+                        <i class="bi bi-exclamation-triangle"></i> رسوم أضرار (ج.م)
+                    </label>
+                    <input asp-for="DamageCharges" type="number" class="form-control charge-input"
+                           step="0.01" min="0" placeholder="0.00" />
+                    <span asp-validation-for="DamageCharges" class="text-danger"></span>
+                    <small class="form-text text-muted">في حالة وجود أضرار بالغرفة</small>
+                </div>
+
+                <!-- Additional Charges -->
+                <div class="col-md-6">
+                    <label asp-for="AdditionalCharges" class="form-label">
+                        <i class="bi bi-plus-circle"></i> رسوم أخرى (ج.م)
+                    </label>
+                    <input asp-for="AdditionalCharges" type="number" class="form-control charge-input"
+                           step="0.01" min="0" placeholder="0.00" />
+                    <span asp-validation-for="AdditionalCharges" class="text-danger"></span>
+                </div>
+
+                <!-- Late Checkout Fee -->
+                @if (Model.IsLateCheckOut)
+                {
+                    <div class="col-md-6">
+                        <label asp-for="LateCheckOutFee" class="form-label">
+                            <i class="bi bi-clock"></i> رسوم التأخير (ج.م)
+                        </label>
+                        <input asp-for="LateCheckOutFee" type="number" class="form-control"
+                               step="0.01" min="0" />
+                        <small class="form-text text-danger">تطبق رسوم التأخير بعد @Model.ScheduledCheckOutTime.ToString("hh:mm tt")</small>
+                    </div>
+                }
+
+                <!-- Discount -->
+                <div class="col-md-6">
+                    <label asp-for="DiscountAmount" class="form-label">
+                        <i class="bi bi-percent"></i> خصم (ج.م)
+                    </label>
+                    <input asp-for="DiscountAmount" type="number" class="form-control"
+                           step="0.01" min="0" placeholder="0.00" />
+                    <span asp-validation-for="DiscountAmount" class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- Total Extra Charges Summary -->
+            <div class="alert alert-info mt-3">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>إجمالي الرسوم الإضافية:</strong>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <strong id="totalCharges">0.00 ج.م</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Status -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-credit-card"></i> حالة الدفع</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="FinalPaymentStatus" class="form-label">حالة الدفع النهائية</label>
+                    <select asp-for="FinalPaymentStatus" class="form-select">
+                        <option value="مدفوع بالكامل">مدفوع بالكامل</option>
+                        <option value="معلق" selected>معلق</option>
+                        <option value="دفع جزئي">دفع جزئي</option>
+                    </select>
+                </div>
+
+                <!-- Checkout Notes -->
+                <div class="col-12">
+                    <label asp-for="CheckOutNotes" class="form-label">ملاحظات الخروج</label>
+                    <textarea asp-for="CheckOutNotes" class="form-control" rows="3"
+                              placeholder="أي ملاحظات عن حالة الغرفة، تجربة النزيل، أو معلومات أخرى..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-12 d-flex justify-content-between align-items-center">
+                    <div>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> تأكيد تسجيل الخروج
+                        </button>
+                        <a asp-action="Details" asp-route-id="@Model.ReservationId" class="btn btn-secondary btn-lg">
+                            <i class="bi bi-x-circle"></i> إلغاء
+                        </a>
+                    </div>
+                    <div class="text-end">
+                        <p class="mb-0 text-muted">سيتم إصدار الفاتورة النهائية بعد التأكيد</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current date/time as default
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const datetime = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+            const input = document.querySelector('input[name="ActualCheckOutTime"]');
+            if (input && !input.value) {
+                input.value = datetime;
+            }
+
+            // Calculate total charges dynamically
+            const chargeInputs = document.querySelectorAll('.charge-input');
+            const lateCheckoutInput = document.querySelector('input[name="LateCheckOutFee"]');
+            const discountInput = document.querySelector('input[name="DiscountAmount"]');
+            const totalDisplay = document.getElementById('totalCharges');
+
+            function calculateTotal() {
+                let total = 0;
+
+                chargeInputs.forEach(input => {
+                    const value = parseFloat(input.value) || 0;
+                    total += value;
+                });
+
+                if (lateCheckoutInput) {
+                    total += parseFloat(lateCheckoutInput.value) || 0;
+                }
+
+                if (discountInput) {
+                    total -= parseFloat(discountInput.value) || 0;
+                }
+
+                totalDisplay.textContent = total.toFixed(2) + ' ج.م';
+            }
+
+            chargeInputs.forEach(input => {
+                input.addEventListener('input', calculateTotal);
+            });
+
+            if (lateCheckoutInput) {
+                lateCheckoutInput.addEventListener('input', calculateTotal);
+            }
+
+            if (discountInput) {
+                discountInput.addEventListener('input', calculateTotal);
+            }
+
+            // Initial calculation
+            calculateTotal();
+        });
+    </script>
+}

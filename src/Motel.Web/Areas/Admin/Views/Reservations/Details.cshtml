@@ -1,13 +1,15 @@
-@model Motel.Application.DTOs.ReservationDto
+@model Motel.Web.ViewModels.Reservations.ReservationDetailViewModel
 @{
     ViewData["Title"] = "تفاصيل الحجز";
-    var invoice = ViewBag.Invoice as Motel.Application.DTOs.InvoiceDto;
 }
 
 <div class="row">
     <div class="col-md-10 offset-md-1">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2>تفاصيل الحجز</h2>
+            <div>
+                <h2>تفاصيل الحجز</h2>
+                <span class="badge @Model.StatusBadgeClass fs-6">@Model.StatusDisplay</span>
+            </div>
             <a asp-action="Index" class="btn btn-secondary">
                 <i class="bi bi-arrow-right"></i> رجوع
             </a>
@@ -30,16 +32,30 @@
                         </div>
                         <div class="row mb-2">
                             <div class="col-md-4 fw-bold">تاريخ الوصول:</div>
-                            <div class="col-md-8">@Model.CheckInDate.ToString("dd/MM/yyyy")</div>
+                            <div class="col-md-8">@Model.CheckInDateFormatted</div>
                         </div>
                         <div class="row mb-2">
                             <div class="col-md-4 fw-bold">تاريخ المغادرة:</div>
-                            <div class="col-md-8">@Model.CheckOutDate.ToString("dd/MM/yyyy")</div>
+                            <div class="col-md-8">@Model.CheckOutDateFormatted</div>
                         </div>
                         <div class="row mb-2">
                             <div class="col-md-4 fw-bold">عدد الليالي:</div>
-                            <div class="col-md-8">@Model.Nights ليلة</div>
+                            <div class="col-md-8">@Model.NumberOfNights ليلة</div>
                         </div>
+                        @if (Model.ActualCheckInTime.HasValue)
+                        {
+                            <div class="row mb-2">
+                                <div class="col-md-4 fw-bold">وقت الدخول الفعلي:</div>
+                                <div class="col-md-8 text-success">@Model.ActualCheckInTimeFormatted</div>
+                            </div>
+                        }
+                        @if (Model.ActualCheckOutTime.HasValue)
+                        {
+                            <div class="row mb-2">
+                                <div class="col-md-4 fw-bold">وقت الخروج الفعلي:</div>
+                                <div class="col-md-8 text-info">@Model.ActualCheckOutTimeFormatted</div>
+                            </div>
+                        }
                         <div class="row mb-2">
                             <div class="col-md-4 fw-bold">عدد النزلاء:</div>
                             <div class="col-md-8">@Model.Guests شخص</div>
@@ -63,24 +79,25 @@
                             <div class="col-md-6">السعر / ليلة:</div>
                             <div class="col-md-6 text-end">@Model.NightlyRate.ToString("N2") ج.م</div>
                         </div>
-                        @if (Model.ExtraCharges.HasValue && Model.ExtraCharges.Value > 0)
+                        <div class="row mb-2">
+                            <div class="col-md-6">عدد الليالي:</div>
+                            <div class="col-md-6 text-end">@Model.NumberOfNights</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-md-6">المجموع الفرعي:</div>
+                            <div class="col-md-6 text-end">@Model.TotalAmountFormatted</div>
+                        </div>
+                        @if (Model.ExtraCharges > 0)
                         {
                             <div class="row mb-2">
                                 <div class="col-md-6">رسوم إضافية:</div>
-                                <div class="col-md-6 text-end">@Model.ExtraCharges.Value.ToString("N2") ج.م</div>
-                            </div>
-                        }
-                        @if (Model.DiscountAmount.HasValue && Model.DiscountAmount.Value > 0)
-                        {
-                            <div class="row mb-2 text-danger">
-                                <div class="col-md-6">خصم:</div>
-                                <div class="col-md-6 text-end">-@Model.DiscountAmount.Value.ToString("N2") ج.م</div>
+                                <div class="col-md-6 text-end">@Model.ExtraChargesFormatted</div>
                             </div>
                         }
                         <hr />
                         <div class="row">
-                            <div class="col-md-6 fw-bold">المجموع:</div>
-                            <div class="col-md-6 text-end fw-bold text-success fs-5">@Model.TotalAmount.ToString("N2") ج.م</div>
+                            <div class="col-md-6 fw-bold">المجموع النهائي:</div>
+                            <div class="col-md-6 text-end fw-bold text-success fs-5">@Model.FinalTotalFormatted</div>
                         </div>
                     </div>
                 </div>
@@ -92,42 +109,45 @@
                         <h5 class="mb-0"><i class="bi bi-gear"></i> الإجراءات</h5>
                     </div>
                     <div class="card-body">
-                        @if (!Model.CheckedIn)
+                        <!-- Check-in Actions -->
+                        @if (Model.CanCheckIn)
                         {
-                            <form asp-action="CheckIn" asp-route-id="@Model.Id" method="post" class="mb-2">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-success w-100">
-                                    <i class="bi bi-box-arrow-in-right"></i> تسجيل الدخول
-                                </button>
-                            </form>
+                            <a asp-action="CheckIn" asp-route-id="@Model.Id" class="btn btn-success w-100 mb-2">
+                                <i class="bi bi-box-arrow-in-right"></i> تسجيل الدخول
+                            </a>
+                            <small class="text-muted">انقر لبدء عملية تسجيل الدخول</small>
                         }
-                        else if (!Model.CheckedOut)
+
+                        <!-- Check-out Actions -->
+                        @if (Model.CanCheckOut)
                         {
                             <div class="alert alert-success mb-2">
                                 <i class="bi bi-check-circle"></i> تم تسجيل الدخول
+                                @if (Model.ActualCheckInTime.HasValue)
+                                {
+                                    <br/><small>@Model.ActualCheckInTimeFormatted</small>
+                                }
                             </div>
 
-                            <form asp-action="CheckOut" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('هل تريد تسجيل الخروج؟')">
-                                @Html.AntiForgeryToken()
-                                <div class="mb-2">
-                                    <label class="form-label">رسوم إضافية (اختياري)</label>
-                                    <input type="number" name="extraCharges" step="0.01" class="form-control" value="0" />
-                                </div>
-                                <button type="submit" class="btn btn-danger w-100">
-                                    <i class="bi bi-box-arrow-right"></i> تسجيل الخروج
-                                </button>
-                            </form>
+                            <a asp-action="CheckOut" asp-route-id="@Model.Id" class="btn btn-danger w-100 mb-2">
+                                <i class="bi bi-box-arrow-right"></i> تسجيل الخروج
+                            </a>
+                            <small class="text-muted">انقر لبدء عملية تسجيل الخروج</small>
                         }
-                        else
+
+                        <!-- Completed Status -->
+                        @if (!Model.CanCheckIn && !Model.CanCheckOut && Model.ActualCheckOutTime.HasValue)
                         {
-                            <div class="alert alert-secondary">
+                            <div class="alert alert-info mb-2">
                                 <i class="bi bi-check-all"></i> اكتمل الحجز
+                                <br/><small>@Model.ActualCheckOutTimeFormatted</small>
                             </div>
                         }
 
                         <hr />
 
-                        @if (invoice == null && Model.CheckedOut)
+                        <!-- Invoice Actions -->
+                        @if (Model.CanIssueInvoice && !Model.InvoiceId.HasValue)
                         {
                             <form asp-controller="Invoices" asp-action="Issue" asp-route-reservationId="@Model.Id" method="post">
                                 @Html.AntiForgeryToken()
@@ -136,11 +156,36 @@
                                 </button>
                             </form>
                         }
-                        else if (invoice != null)
+                        @if (Model.InvoiceId.HasValue)
                         {
-                            <a asp-controller="Invoices" asp-action="Details" asp-route-id="@invoice.Id" class="btn btn-info w-100 mb-2">
+                            <a asp-controller="Invoices" asp-action="Details" asp-route-id="@Model.InvoiceId" class="btn btn-info w-100 mb-2">
                                 <i class="bi bi-receipt"></i> عرض الفاتورة
                             </a>
+                            @if (!string.IsNullOrEmpty(Model.InvoiceSerial))
+                            {
+                                <small class="text-muted">رقم الفاتورة: @Model.InvoiceSerial</small>
+                            }
+                        }
+
+                        <!-- Edit/Cancel Actions -->
+                        <hr />
+
+                        @if (Model.CanEdit)
+                        {
+                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning w-100 mb-2">
+                                <i class="bi bi-pencil"></i> تعديل الحجز
+                            </a>
+                        }
+
+                        @if (Model.CanCancel)
+                        {
+                            <form asp-action="Cancel" asp-route-id="@Model.Id" method="post"
+                                  onsubmit="return confirm('هل أنت متأكد من إلغاء هذا الحجز؟')">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline-danger w-100">
+                                    <i class="bi bi-x-circle"></i> إلغاء الحجز
+                                </button>
+                            </form>
                         }
                     </div>
                 </div>
