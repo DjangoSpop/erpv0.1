@@ -65,7 +65,7 @@ builder.Services.AddScoped<ISmsProvider, FakeSmsProvider>();
 
 var app = builder.Build();
 
-// Ensure database is created and apply migrations
+// Ensure database is created
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -73,11 +73,13 @@ using (var scope = app.Services.CreateScope())
 
     try
     {
-        // Ensure the AppData directory exists
-        var connectionString = builder.Configuration.GetConnectionString("Default");
-        if (!string.IsNullOrEmpty(connectionString) && connectionString.Contains("Data Source="))
+        var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
+            ?? builder.Configuration.GetConnectionString("Default");
+
+        if (connStr?.Contains("Data Source=") == true && !connStr.Contains("Server="))
         {
-            var dbPath = connectionString.Replace("Data Source=", "").Trim();
+            // SQLite for development - ensure directory exists
+            var dbPath = connStr.Replace("Data Source=", "").Trim();
             var directory = Path.GetDirectoryName(dbPath);
 
             if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
@@ -85,15 +87,23 @@ using (var scope = app.Services.CreateScope())
                 Directory.CreateDirectory(directory);
                 logger.LogInformation("Created AppData directory at {Directory}", directory);
             }
-        }
 
-        // Ensure database is created with migrations
-        dbContext.Database.EnsureCreated();
-        logger.LogInformation("Database initialized successfully");
+            // Use EnsureCreated for SQLite (no migrations needed)
+            dbContext.Database.EnsureCreated();
+            logger.LogInformation("SQLite database initialized successfully");
+        }
+        else
+        {
+            // SQL Server - apply migrations
+            logger.LogInformation("Applying SQL Server migrations...");
+            dbContext.Database.Migrate();
+            logger.LogInformation("SQL Server database migrations applied successfully");
+        }
     }
     catch (Exception ex)
     {
         logger.LogError(ex, "An error occurred while initializing the database");
+        // Don't throw - allow app to start but log the error
     }
 }
 
