@@ -16,10 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));
 
-// Configure Kestrel
-builder.WebHost.UseKestrel();
-
-// Add services to the container
+// Add services to the container - Standard MVC
 builder.Services.AddControllersWithViews()
     .AddDataAnnotationsLocalization()
     .AddViewLocalization();
@@ -33,9 +30,22 @@ builder.Services.AddLocalization(options => options.ResourcesPath = "Resources")
 builder.Services.Configure<BrandingOptions>(
     builder.Configuration.GetSection("Branding"));
 
-// Configure DbContext
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
+// Configure DbContext - SQL Server or SQLite
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? builder.Configuration.GetConnectionString("Default");
+
+if (connectionString?.Contains("Data Source=") == true && !connectionString.Contains("Server="))
+{
+    // SQLite for development
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlite(connectionString));
+}
+else
+{
+    // SQL Server for production
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlServer(connectionString));
+}
 
 // Register FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
@@ -110,15 +120,14 @@ app.UseRouting();
 
 app.UseAuthorization();
 
-// Map default route
+// CRITICAL FIX: Map Area routes FIRST, then default routes
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-
-// Map area routes
-app.MapControllerRoute(
-    name: "admin",
-    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
 
 app.MapRazorPages();
 
