@@ -1,13 +1,13 @@
 using System.ComponentModel.DataAnnotations;
+using Motel.Domain.Common;
 
 namespace Motel.Domain.Entities;
 
 /// <summary>
 /// Notification log for tracking sent emails/SMS
 /// </summary>
-public class NotificationLog
+public class NotificationLog : BaseEntity
 {
-    public Guid Id { get; set; }
 
     public Guid? ReservationId { get; set; }
 

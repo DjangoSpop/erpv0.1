@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Motel.Domain.Common;
 using Motel.Domain.Enums;
 
 namespace Motel.Domain.Entities;
@@ -6,9 +7,8 @@ namespace Motel.Domain.Entities;
 /// <summary>
 /// Room entity
 /// </summary>
-public class Room
+public class Room : BaseEntity
 {
-    public Guid Id { get; set; }
 
     [Required]
     [MaxLength(20)]

@@ -1,13 +1,13 @@
 using System.ComponentModel.DataAnnotations;
+using Motel.Domain.Common;
 
 namespace Motel.Domain.Entities;
 
 /// <summary>
 /// Guest/Client entity
 /// </summary>
-public class Client
+public class Client : BaseEntity
 {
-    public Guid Id { get; set; }
 
     [Required]
     [MaxLength(200)]

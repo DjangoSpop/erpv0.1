@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Motel.Application.DTOs;
 using Motel.Application.Interfaces;
 using Motel.Domain.Entities;
 using Motel.Domain.Enums;
+using Motel.Domain.Exceptions;
 using Motel.Infrastructure.Data;
 
 namespace Motel.Infrastructure.Services;
@@ -11,11 +13,16 @@ public class ReservationsService : IReservationsService
 {
     private readonly AppDbContext _context;
     private readonly INotificationsService _notificationsService;
+    private readonly ILogger<ReservationsService> _logger;
 
-    public ReservationsService(AppDbContext context, INotificationsService notificationsService)
+    public ReservationsService(
+        AppDbContext context,
+        INotificationsService notificationsService,
+        ILogger<ReservationsService> logger)
     {
         _context = context;
         _notificationsService = notificationsService;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<ReservationDto>> GetAllAsync()
@@ -39,18 +46,61 @@ public class ReservationsService : IReservationsService
 
     public async Task<ReservationDto> CreateAsync(CreateReservationDto dto)
     {
-        // Check for overlaps
-        var hasOverlap = await HasOverlapAsync(dto.RoomId, dto.CheckInDate, dto.CheckOutDate);
-        if (hasOverlap)
-            throw new InvalidOperationException("الغرفة محجوزة في هذه الفترة");
+        _logger.LogInformation("Creating reservation for Client {ClientId} in Room {RoomId} from {CheckIn} to {CheckOut}",
+            dto.ClientId, dto.RoomId, dto.CheckInDate, dto.CheckOutDate);
 
-        // Verify room capacity
+        // Validate dates
+        if (dto.CheckOutDate <= dto.CheckInDate)
+        {
+            _logger.LogWarning("Invalid dates: CheckOut {CheckOut} must be after CheckIn {CheckIn}",
+                dto.CheckOutDate, dto.CheckInDate);
+            throw new ValidationException("Check-out date must be after check-in date");
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        if (dto.CheckInDate < today)
+        {
+            _logger.LogWarning("Invalid check-in date: {CheckIn} is in the past", dto.CheckInDate);
+            throw new ValidationException("Check-in date cannot be in the past");
+        }
+
+        // Verify client exists
+        var clientExists = await _context.Clients.AnyAsync(c => c.Id == dto.ClientId);
+        if (!clientExists)
+        {
+            _logger.LogWarning("Client {ClientId} not found", dto.ClientId);
+            throw new EntityNotFoundException("Client", dto.ClientId);
+        }
+
+        // Verify room exists and get capacity
         var room = await _context.Rooms.FindAsync(dto.RoomId);
         if (room == null)
-            throw new InvalidOperationException("الغرفة غير موجودة");
+        {
+            _logger.LogWarning("Room {RoomId} not found", dto.RoomId);
+            throw new EntityNotFoundException("Room", dto.RoomId);
+        }
+
+        if (room.Status == RoomStatus.OutOfService)
+        {
+            _logger.LogWarning("Room {RoomId} is out of service", dto.RoomId);
+            throw new MotelBusinessException($"Room {room.Number} is currently out of service", "ROOM_OUT_OF_SERVICE");
+        }
 
         if (room.Capacity < dto.Guests)
-            throw new InvalidOperationException("سعة الغرفة غير كافية");
+        {
+            _logger.LogWarning("Room {RoomId} capacity {Capacity} insufficient for {Guests} guests",
+                dto.RoomId, room.Capacity, dto.Guests);
+            throw new ValidationException($"Room {room.Number} can accommodate maximum {room.Capacity} guests");
+        }
+
+        // Check for overlapping reservations
+        var hasOverlap = await HasOverlapAsync(dto.RoomId, dto.CheckInDate, dto.CheckOutDate);
+        if (hasOverlap)
+        {
+            _logger.LogWarning("Room {RoomId} has overlapping reservation for {CheckIn} to {CheckOut}",
+                dto.RoomId, dto.CheckInDate, dto.CheckOutDate);
+            throw new RoomNotAvailableException(dto.RoomId, dto.CheckInDate, dto.CheckOutDate);
+        }
 
         var reservation = new Reservation
         {
@@ -60,7 +110,7 @@ public class ReservationsService : IReservationsService
             CheckInDate = dto.CheckInDate,
             CheckOutDate = dto.CheckOutDate,
             Guests = dto.Guests,
-            NightlyRate = dto.NightlyRate,
+            NightlyRate = dto.NightlyRate > 0 ? dto.NightlyRate : room.BaseNightlyRate,
             DiscountAmount = dto.DiscountAmount,
             ExtraCharges = dto.ExtraCharges,
             Notes = dto.Notes,
@@ -75,65 +125,129 @@ public class ReservationsService : IReservationsService
 
         await _context.SaveChangesAsync();
 
-        // Send booking confirmation
-        await _notificationsService.SendBookingConfirmationAsync(reservation.Id);
+        _logger.LogInformation("Reservation {ReservationId} created successfully", reservation.Id);
 
-        // Schedule checkout reminder
-        var checkoutReminderTime = dto.CheckOutDate.ToDateTime(new TimeOnly(10, 0))
-            .AddDays(-1).ToUniversalTime();
-        await _notificationsService.ScheduleCheckoutReminderAsync(reservation.Id, checkoutReminderTime);
+        try
+        {
+            // Send booking confirmation
+            await _notificationsService.SendBookingConfirmationAsync(reservation.Id);
 
-        return await GetByIdAsync(reservation.Id) ?? throw new InvalidOperationException();
+            // Schedule checkout reminder
+            var checkoutReminderTime = dto.CheckOutDate.ToDateTime(new TimeOnly(10, 0))
+                .AddDays(-1).ToUniversalTime();
+            await _notificationsService.ScheduleCheckoutReminderAsync(reservation.Id, checkoutReminderTime);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to send notification for reservation {ReservationId}", reservation.Id);
+            // Don't fail the reservation creation if notification fails
+        }
+
+        return await GetByIdAsync(reservation.Id) ?? throw new EntityNotFoundException("Reservation", reservation.Id);
     }
 
     public async Task<ReservationDto> CheckInAsync(Guid reservationId)
     {
+        _logger.LogInformation("Processing check-in for reservation {ReservationId}", reservationId);
+
         var reservation = await _context.Reservations
             .Include(r => r.Room)
             .FirstOrDefaultAsync(r => r.Id == reservationId);
 
         if (reservation == null)
-            throw new InvalidOperationException("الحجز غير موجود");
+        {
+            _logger.LogWarning("Reservation {ReservationId} not found", reservationId);
+            throw new EntityNotFoundException("Reservation", reservationId);
+        }
 
         if (reservation.CheckedIn)
-            throw new InvalidOperationException("تم تسجيل الدخول بالفعل");
+        {
+            _logger.LogWarning("Reservation {ReservationId} already checked in", reservationId);
+            throw new InvalidReservationStateException(reservationId, "Checked In", "Confirmed");
+        }
+
+        if (reservation.CheckedOut)
+        {
+            _logger.LogWarning("Cannot check in: Reservation {ReservationId} already checked out", reservationId);
+            throw new InvalidReservationStateException(reservationId, "Checked Out", "Confirmed");
+        }
+
+        // Check if check-in date is valid (allow check-in 1 day before)
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        if (reservation.CheckInDate > today.AddDays(1))
+        {
+            _logger.LogWarning("Check-in date {CheckInDate} is too far in the future", reservation.CheckInDate);
+            throw new ValidationException($"Check-in is scheduled for {reservation.CheckInDate:yyyy-MM-dd}. Too early to check in.");
+        }
 
         reservation.CheckedIn = true;
         reservation.Room.Status = RoomStatus.Occupied;
 
         await _context.SaveChangesAsync();
 
-        // Send check-in notice
-        await _notificationsService.SendCheckInNoticeAsync(reservationId);
+        _logger.LogInformation("Check-in completed for reservation {ReservationId}", reservationId);
 
-        return await GetByIdAsync(reservationId) ?? throw new InvalidOperationException();
+        try
+        {
+            await _notificationsService.SendCheckInNoticeAsync(reservationId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to send check-in notification for reservation {ReservationId}", reservationId);
+        }
+
+        return await GetByIdAsync(reservationId) ?? throw new EntityNotFoundException("Reservation", reservationId);
     }
 
     public async Task<ReservationDto> CheckOutAsync(Guid reservationId, decimal? extraCharges = null)
     {
+        _logger.LogInformation("Processing check-out for reservation {ReservationId} with extra charges: {ExtraCharges}",
+            reservationId, extraCharges);
+
         var reservation = await _context.Reservations
             .Include(r => r.Room)
             .Include(r => r.Invoice)
             .FirstOrDefaultAsync(r => r.Id == reservationId);
 
         if (reservation == null)
-            throw new InvalidOperationException("الحجز غير موجود");
+        {
+            _logger.LogWarning("Reservation {ReservationId} not found", reservationId);
+            throw new EntityNotFoundException("Reservation", reservationId);
+        }
 
         if (!reservation.CheckedIn)
-            throw new InvalidOperationException("لم يتم تسجيل الدخول بعد");
+        {
+            _logger.LogWarning("Cannot check out: Reservation {ReservationId} not checked in yet", reservationId);
+            throw new InvalidReservationStateException(reservationId, "Not Checked In", "Checked In");
+        }
 
         if (reservation.CheckedOut)
-            throw new InvalidOperationException("تم تسجيل الخروج بالفعل");
+        {
+            _logger.LogWarning("Reservation {ReservationId} already checked out", reservationId);
+            throw new InvalidReservationStateException(reservationId, "Checked Out", "Checked In");
+        }
 
         reservation.CheckedOut = true;
         reservation.Room.Status = RoomStatus.Available;
 
+        if (extraCharges.HasValue && extraCharges.Value < 0)
+        {
+            _logger.LogWarning("Invalid extra charges: {ExtraCharges}", extraCharges.Value);
+            throw new ValidationException("Extra charges cannot be negative");
+        }
+
         if (extraCharges.HasValue)
+        {
             reservation.ExtraCharges = (reservation.ExtraCharges ?? 0) + extraCharges.Value;
+            _logger.LogInformation("Added extra charges {Amount} to reservation {ReservationId}",
+                extraCharges.Value, reservationId);
+        }
 
         await _context.SaveChangesAsync();
 
-        return await GetByIdAsync(reservationId) ?? throw new InvalidOperationException();
+        _logger.LogInformation("Check-out completed for reservation {ReservationId}", reservationId);
+
+        return await GetByIdAsync(reservationId) ?? throw new EntityNotFoundException("Reservation", reservationId);
     }
 
     public async Task<IEnumerable<ReservationDto>> GetByDateRangeAsync(DateOnly from, DateOnly to)

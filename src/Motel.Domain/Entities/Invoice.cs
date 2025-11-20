@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Motel.Domain.Common;
 using Motel.Domain.Enums;
 
 namespace Motel.Domain.Entities;
@@ -6,9 +7,8 @@ namespace Motel.Domain.Entities;
 /// <summary>
 /// Invoice entity
 /// </summary>
-public class Invoice
+public class Invoice : BaseEntity
 {
-    public Guid Id { get; set; }
 
     public Guid ReservationId { get; set; }
     public Reservation Reservation { get; set; } = default!;
@@ -32,4 +32,9 @@ public class Invoice
     [Required]
     [MaxLength(50)]
     public string Serial { get; set; } = default!;
+
+    /// <summary>
+    /// Line items for detailed invoice breakdown
+    /// </summary>
+    public ICollection<InvoiceLineItem> LineItems { get; set; } = new List<InvoiceLineItem>();
 }
